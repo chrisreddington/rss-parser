@@ -1,0 +1,23 @@
+name: "Manual RSS Feed Test"
+on:
+  workflow_dispatch:
+    inputs:
+      feed_url:
+        description: "URL of RSS feed to be read"
+        type: string
+        required: true
+        default: 'https://github.blog/feed/'
+      script_output:
+        description: "Output of the script (e.g. issue, json)"
+        type: string
+        required: true
+        default: 'issue'
+jobs:
+  manual_rss_feed_execution:
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: chrisreddington/rss-parser-action@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          feed_url: ${{ inputs.feed_url }}
+          script_output: ${{ inputs.script_output }}

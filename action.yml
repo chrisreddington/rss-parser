@@ -1,0 +1,20 @@
+name: 'RSS Parser Action'
+description: 'GitHub Action to Parse RSS Feeds and take action'
+inputs:
+  github_token:
+    description: "GitHub Token. This is only required if the script_output is set to issue."
+    required: true
+  feed_url:
+    description: "URL of RSS feed to be read"
+    required: true
+    default: 'https://github.blog/feed/'
+  script_output:
+    description: "Output of the script (e.g. issue, json)"
+    required: true
+    default: 'issue'
+outputs:
+  posts: 
+    description: 'The JSON output of the posts discovered'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

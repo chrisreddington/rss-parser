@@ -1,0 +1,32 @@
+{
+  "name": "rss-parser-action",
+  "version": "0.0.1",
+  "author": "Chris Reddington <chris@cloudwithchris.com>",
+  "description": "GitHub Action to Parse RSS Feeds and take action",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist --license LICENSE",
+    "bump": "npm version",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisreddington/rss-parser-action.git"
+  },
+  "keywords": [
+    "RSS Parser",
+    "GitHub Action",
+    "GitHub"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chrisreddington/rss-parser-action/issues"
+  },
+  "homepage": "https://github.com/chrisreddington/rss-parser-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "got": "^11.8.5",
+    "jsdom": "^20.0.1"
+  }
+}
