@@ -1,4 +1,4 @@
-name: 'RSS Parser Action'
+name: 'RSS Parser'
 description: 'GitHub Action to Parse RSS Feeds and take action'
 inputs:
   github_token:
