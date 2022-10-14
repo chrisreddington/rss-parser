@@ -8,6 +8,8 @@ const got = require('got');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
+let itemCount = 0;
+
 async function check_url(feed_url) {
   // Check that the provided URL is valid
   try {
@@ -38,6 +40,7 @@ async function parse_feed(octokit, items, script_output) {
   let output = [];
 
   [...items].forEach((item) => {
+    this.itemCount++;
 
     // Create an object of item and url
     let itemObject = {
@@ -78,5 +81,6 @@ async function parse_feed(octokit, items, script_output) {
 module.exports = {
   check_url,
   fetch_feed,
-  parse_feed
+  parse_feed,
+  itemCount
 };

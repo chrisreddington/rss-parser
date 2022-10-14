@@ -7,7 +7,7 @@
   "scripts": {
     "build": "ncc build src/index.js -o dist --license LICENSE",
     "bump": "npm version",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest src"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
     "jsdom": "^20.0.1"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.34.0"
+    "@vercel/ncc": "^0.34.0",
+    "jest": "^27.2.5"
   }
 }

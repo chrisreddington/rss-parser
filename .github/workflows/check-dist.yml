@@ -4,7 +4,7 @@
 # For our project, we generate this file through a build process
 # from other source files.
 # We need to make sure the checked-in `index.js` actually matches what we expect it to be.
-name: Check dist
+name: Check dist output and run tests
 
 on:
   push:
@@ -49,3 +49,6 @@ jobs:
         with:
           name: dist
           path: dist/
+
+      - name: Check tests complete successfully
+        run: npm run test
