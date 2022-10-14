@@ -3,6 +3,11 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+// Setup packages to enable the fetching of RSS feeds and parsing of XML.
+const got = require('got');
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
+
 async function check_url(feed_url) {
   // Check that the provided URL is valid
   try {

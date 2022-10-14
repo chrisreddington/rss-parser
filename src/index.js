@@ -3,13 +3,10 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-// Setup packages to enable the fetching of RSS feeds and parsing of XML.
-const got = require('got');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
-
+// Pull in utils to enable the fetching of RSS feeds and parsing of XML.
 const utils = require('./utils');
 
+// The main function to run when the action is called
 async function run() {
   // Pull in the inputs from the workflow.
   const feed_url = core.getInput('feed_url');
