@@ -34,7 +34,7 @@ got(feed_url).then((response) => {
   let feedOutput = new JSDOM(response.body, { contentType: "text/xml" });
   let items = feedOutput.window.document.querySelectorAll("item");
 
-  let returnedItems;
+  let returnedItems = [];
   
   [...items].forEach((item) => {
 
