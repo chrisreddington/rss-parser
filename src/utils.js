@@ -64,3 +64,9 @@ async function parse_feed(octokit, items, script_output) {
     core.setOutput("items", output);
   }
 }
+
+module.exports = {
+  check_url,
+  fetch_feed,
+  parse_feed
+};
