@@ -4,6 +4,7 @@ inputs:
   github_token:
     description: "GitHub Token. This is only required if the script_output is set to issue."
     required: true
+    default: ${{ github.token }}
   feed_url:
     description: "URL of RSS feed to be read"
     required: true
