@@ -18,6 +18,5 @@ jobs:
     steps: 
       - uses: chrisreddington/rss-parser-action@main
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           feed_url: ${{ inputs.feed_url }}
           script_output: ${{ inputs.script_output }}
