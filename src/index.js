@@ -8,34 +8,50 @@ const got = require('got');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
-// Pull in the inputs from the workflow.
-const feed_url = core.getInput('feed_url');
-const script_output = core.getInput('script_output');
 
-// Authenticate the Octokit REST client with the token provided as an input into the GitHub Action
-const github_token = core.getInput('github_token');
-const octokit = github.getOctokit(github_token)
+async function run() {
+  // Pull in the inputs from the workflow.
+  const feed_url = core.getInput('feed_url');
+  const script_output = core.getInput('script_output');
+  
+  // Authenticate the Octokit REST client with the token provided as an input into the GitHub Action
+  const github_token = core.getInput('github_token');
+  const octokit = github.getOctokit(github_token);
 
-// Check that the provided URL is valid
-try {
-  url = new URL(feed_url);
-
-  if (url.protocol === "http:" || url.protocol === "https:") {
-  } else {
-    core.setFailed(`URL does not begin with http or https: ${input}`);
-  }
-} catch (_) {
-  core.setFailed(`URL is not valid: ${feed_url}`);
+  await check_url(feed_url);
+  let items = await fetch_feed(feed_url);
+  await parse_feed(octokit, items, script_output);
 }
 
-// If valid, then fetch the RSS feed and parse the XML
-got(feed_url).then((response) => {
-  // Parse the feed output as XML, and grab the items
-  let feedOutput = new JSDOM(response.body, { contentType: "text/xml" });
-  let items = feedOutput.window.document.querySelectorAll("item");
-
-  let returnedItems = [];
+async function check_url(feed_url) {
+  // Check that the provided URL is valid
+  try {
+    url = new URL(feed_url);
   
+    if (url.protocol === "http:" || url.protocol === "https:") {
+    } else {
+      core.setFailed(`URL does not begin with http or https: ${input}`);
+    }
+  } catch (_) {
+    core.setFailed(`URL is not valid: ${feed_url}`);
+  }
+}
+
+async function fetch_feed(feed_url) {
+  // Fetch the RSS feed from the provided URL
+  try {
+    const response = await got(feed_url);
+    const feedOutput = new JSDOM(response.body, {contentType: "text/xml"});
+    const items = feedOutput.window.document.querySelectorAll("item");
+    return items;
+  } catch (error) {
+    core.setFailed(`An error occurred while fetching the RSS feed: ${error}`);
+  }
+}
+
+async function parse_feed(octokit, items, script_output) {
+  let output = [];
+
   [...items].forEach((item) => {
 
     // Create an object of item and url
@@ -58,16 +74,20 @@ got(feed_url).then((response) => {
         core.setFailed(`GitHub issue was not created: ${error}`);
       }
     } else if (script_output === "json") {
-      // Add that item to the array
-      returnedItems.push(itemObject);
+      try {
+        // Add that item to the array
+        output.push(itemObject);
+      } catch (error) {
+        core.setFailed(`JSON output was not created: ${error}`);
+      }
     }
   });
 
   if (script_output === "json") {
     // Return the array of items
-    console.log(returnedItems);
+    console.log(output);
+    core.setOutput("items", output);
   }
-})
-.catch((error) => {
-  core.setFailed(`Action failed with error ${error}`);
-});
+}
+
+run();
