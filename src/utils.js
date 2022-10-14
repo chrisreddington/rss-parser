@@ -1,3 +1,8 @@
+// Setup core to provide an interface to the workflow commands, input and output variables, exit statuses, and debug messages.
+// Setup github to return an authenticated Octokit REST client and access to GitHub Actions contexts.
+const core = require('@actions/core');
+const github = require('@actions/github');
+
 async function check_url(feed_url) {
   // Check that the provided URL is valid
   try {
