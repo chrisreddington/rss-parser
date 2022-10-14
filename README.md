@@ -23,6 +23,9 @@ This is a [GitHub Action](https://docs.github.com/en/actions/learn-github-action
 
     # GitHub Token. Required if setting the script_output to 'issue', 
     # so that the GitHub action can create issues on your behalf.
+    # This is automatically injected with the GitHub Action runner's
+    # token, but you can override this with another token (e.g. PAT)
+    # if needed, (e.g. to create issues as a different user).
     # 
     # Otherwise, this is not required.
     github_token: ''
@@ -53,7 +56,6 @@ jobs:
     steps: 
       - uses: chrisreddington/rss-parser-action@main
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           feed_url: ${{ inputs.feed_url }}
           script_output: ${{ inputs.script_output }}
 ```
@@ -81,7 +83,6 @@ jobs:
     steps: 
       - uses: chrisreddington/rss-parser-action@main
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           feed_url: ${{ inputs.feed_url }}
           script_output: ${{ inputs.script_output }}
 ```
