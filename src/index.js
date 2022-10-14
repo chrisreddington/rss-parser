@@ -33,6 +33,8 @@ got(feed_url).then((response) => {
   // Parse the feed output as XML, and grab the items
   let feedOutput = new JSDOM(response.body, { contentType: "text/xml" });
   let items = feedOutput.window.document.querySelectorAll("item");
+
+  let returnedItems;
   
   [...items].forEach((item) => {
 
