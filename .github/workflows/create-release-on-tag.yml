@@ -15,12 +15,11 @@ jobs:
           result-encoding: string
           retries: 3
           script: |
-            // Use GitHub REST API v3 to create a release
+          
+            const tag = context.ref.replace('refs/tags/', '')
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: context.ref.replace(/^refs\/tags\//, ''),
-              name: context.ref.replace(/^refs\/tags\//, ''),
-              generate_release_notes: true,
-            })
+              tag_name: tag,
+            });
