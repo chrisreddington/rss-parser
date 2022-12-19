@@ -36,7 +36,7 @@ async function fetch_feed(feed_url) {
   }
 }
 
-async function parse_feed(octokit, items, script_output) {
+async function parse_feed(octokit, items, config) {
   let output = [];
 
   [...items].forEach(async (item) => {
@@ -61,7 +61,7 @@ async function parse_feed(octokit, items, script_output) {
       slug: slug
     };
 
-    if (script_output === "issue") {
+    if (config.script_output === "issue") {
       try {
         octokit.rest.issues.create({
           owner: github.context.repo.owner,
@@ -74,21 +74,21 @@ async function parse_feed(octokit, items, script_output) {
       } catch (error) {
         core.setFailed(`GitHub issue was not created: ${error}`);
       }
-    } else if (script_output === "json") {
+    } else if (config.script_output === "json") {
       try {
         // Add that item to the array
         output.push(itemObject);
       } catch (error) {
         core.setFailed(`JSON output was not created: ${error}`);
       }
-    } else if (script_output === "pull_request") {
+    } else if (config.script_output === "pull_request") {
       const branch = await create_branch(octokit, itemObject);
       const file = await create_or_update_file(octokit, itemObject, config, branch);
       const pull_request = await create_pull_request(octokit, itemObject, file);
     }
   });
 
-  if (script_output === "json") {
+  if (config.script_output === "json") {
     // Return the array of items
     console.log(output);
     core.setOutput("items", output);

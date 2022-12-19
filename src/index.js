@@ -10,8 +10,24 @@ const utils = require('./utils');
 async function run() {
   // Pull in the inputs from the workflow.
   const feed_url = core.getInput('feed_url');
-  const script_output = core.getInput('script_output');
-  
+
+  // Set the config object from the actions inputs
+  const config = {
+    script_output: core.getInput('script_output'),
+    subfolder: core.getInput('subfolder'),
+    extension: core.getInput('extension')
+  }
+
+  // If the subfolder is not provided, set it to 'social'
+  if (config.subfolder === '') {
+    config.subfolder = 'social';
+  }
+
+  // If the extension is not provided, set it to '.social'
+  if (config.extension === '') {
+    config.extension = '.social';
+  }
+    
   // Authenticate the Octokit REST client with the token provided as an input into the GitHub Action
   const github_token = core.getInput('github_token');
   const octokit = github.getOctokit(github_token);
@@ -23,7 +39,7 @@ async function run() {
   let items = await utils.fetch_feed(feed_url);
 
   // Parse the RSS feed and take appropriate action
-  await utils.parse_feed(octokit, items, script_output);
+  await utils.parse_feed(octokit, items, config);
 }
 
 run();
