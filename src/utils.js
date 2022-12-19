@@ -48,11 +48,11 @@ async function parse_feed(octokit, items, script_output) {
 
     // If the last item in the array is empty, use the second to last item
     // Otherwise, use the last item
-    if (slugArray.pop() === "") {
-      slug = slugArray[slugArray.length - 2];
+    if (slugArray[slugArray.length - 1] === ""){
+      slug = slugArray[slugArray.length - 2]
     } else {
-      slug = slugArray[slugArray.length - 1];
-    }
+      slug = slugArray[slugArray.length - 1]
+    }    
 
     // Create an object of item and url
     let itemObject = {
@@ -100,7 +100,7 @@ async function parse_feed(octokit, items, script_output) {
         octokit.rest.repos.createOrUpdateFileContents({
           owner: github.context.repo.owner,
           repo: github.context.repo.repo,
-          path: "/tweets/" + itemObject.slug + ".tweet",
+          path: "tweets/" + itemObject.slug + ".tweet",
           message: `Create file for ${itemObject.title}`,
           content: `${itemObject.title} - Check more at ${itemObject.url}`,
           branch: itemObject.slug
