@@ -96,13 +96,15 @@ async function parse_feed(octokit, items, script_output) {
       }
 
       // Use octokit to create a new file in the new branch
+      // Base 64 encode the content
+      
       try {
         octokit.rest.repos.createOrUpdateFileContents({
           owner: github.context.repo.owner,
           repo: github.context.repo.repo,
           path: "tweets/" + itemObject.slug + ".tweet",
           message: `Create file for ${itemObject.title}`,
-          content: `${itemObject.title} - Check more at ${itemObject.url}`,
+          content: Buffer.from(`${itemObject.title} - Check more at ${itemObject.url}`).toString('base64'),
           branch: itemObject.slug
         });
       } catch (error) {
