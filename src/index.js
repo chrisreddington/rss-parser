@@ -19,14 +19,31 @@ async function run() {
     branch_prefix: core.getInput('branch_prefix'),
   }
 
+  core.debug(`Config: ${JSON.stringify(config)}`);
+
   // If the subfolder is not provided, set it to 'social'
   if (config.subfolder === '') {
     config.subfolder = 'social';
   }
 
+  // If the subfolder is empty, don't add a slash
+  if (config.subfolder === "") {
+    config.subfolder = "";
+  } else {
+    // If the sub folder already has a slash, don't add another
+    if (config.subfolder[config.subfolder.length - 1] !== "/") {
+      config.subfolder = `${config.subfolder}/`;
+    }
+  }
+
   // If the extension is not provided, set it to '.social'
   if (config.extension === '') {
     config.extension = '.social';
+  }
+
+  // Check that the extension begins with a dot
+  if (config.extension[0] !== ".") {
+    config.extension = `.${config.extension}`;
   }
     
   // Authenticate the Octokit REST client with the token provided as an input into the GitHub Action

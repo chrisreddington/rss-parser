@@ -54,7 +54,11 @@ async function parse_feed(octokit, items, config) {
       slug = slugArray[slugArray.length - 1]
     }    
 
-    // If the config contains a branch prefix, add it to the slig name
+    core.debug(`Slug: ${slug}`);
+    core.debug(`Branch prefix: ${config.branch_prefix}`)
+    core.debug(`Branch equality check: ${config.branch_prefix !== ""}`);
+
+    // If the config contains a branch prefix, add it to the slug name
     if (config.branch_prefix !== "") {
       slug = `${config.branch_prefix}-${slug}`;
     }
@@ -132,21 +136,6 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
   // Use octokit to create a new file in the new branch
   // Base 64 encode the content
 
-  // If the subfolder is empty, don't add a slash
-  if (config.subfolder === "") {
-    config.subfolder = "";
-  } else {
-    // If the sub folder already has a slash, don't add another
-    if (config.subfolder[config.subfolder.length - 1] !== "/") {
-      config.subfolder = `${config.subfolder}/`;
-    }
-  }
-
-  // Check that the extension begins with a dot
-  if (config.extension[0] !== ".") {
-    config.extension = `.${config.extension}`;
-  }
-
   try {
     return octokit.rest.repos.createOrUpdateFileContents({
       owner: github.context.repo.owner,
@@ -163,8 +152,8 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
 
 async function create_pull_request(octokit, itemObject, config, file) {
   // Use octokit to create a new pull request
-  try {
 
+  try {
     // Check if pull request already exists between the branch and main
     const pullRequest = await octokit.rest.pulls.list({
       owner: github.context.repo.owner,
