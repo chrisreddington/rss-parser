@@ -35,3 +35,6 @@ jobs:
         with:
           feed_url: ${{ inputs.feed_url }}
           script_output: ${{ inputs.script_output }}
+          subfolder: ${{ inputs.subfolder }}
+          extension: ${{ inputs.extension }}
+          branch_prefix: ${{ inputs.branch_prefix }}
