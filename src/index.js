@@ -11,13 +11,13 @@ async function run() {
   // Pull in the inputs from the workflow.
   const feed_url = core.getInput('feed_url');
 
-  // Set the config object from the actions inputs
-  let config = {
-    script_output: core.getInput('script_output'),
-    subfolder: core.getInput('subfolder'),
-    extension: core.getInput('extension'),
-    branch_prefix: core.getInput('branch_prefix'),
-  }
+  // Setup the config object to hold the inputs from the workflow.
+  let config = {};
+
+  config.script_output = core.getInput('script_output');
+  config.subfolder = core.getInput('subfolder');
+  config.extension = core.getInput('extension');
+  config.branch_prefix = core.getInput('branch_prefix');
 
   core.debug(`Config: ${JSON.stringify(config)}`);
 
