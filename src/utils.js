@@ -82,7 +82,7 @@ async function parse_feed(octokit, items, config) {
         core.setFailed(`JSON output was not created: ${error}`);
       }
     } else if (config.script_output === "pull_request") {
-      const branch = await create_branch(octokit, itemObject);
+      const branch = await create_branch(octokit, itemObject, config);
       const file = await create_or_update_file(octokit, itemObject, config, branch);
       const pull_request = await create_pull_request(octokit, itemObject, file);
     }
@@ -95,23 +95,41 @@ async function parse_feed(octokit, items, config) {
   }
 }
 
-async function create_branch(octokit, itemObject) {
-  // Use octokit to create a new branch
+async function create_branch(octokit, itemObject, config) {
+
+  // If the config contains a branch prefix, add it to the branch name
+  if (config.branch_prefix !== "") {
+    itemObject.slug = `${config.branch_prefix}-${itemObject.slug}`;
+  }
+
+  // Check if the branch already exists
   try {
-    return await octokit.rest.git.createRef({
+    const branch = await octokit.rest.git.getRef({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      ref: `refs/heads/${itemObject.slug}`,
-      sha: github.context.sha
+      ref: `heads/${itemObject.slug}`
     });
+
+    core.info(`Branch ${itemObject.slug} already exists, using existing reference.`);
+
+    // If the branch exists, return it
+    return branch;
   } catch (error) {
-    core.setFailed(`GitHub branch was not created: ${error}`);
-  }
+    // If the branch doesn't exist, create it
+    try {
+      return await octokit.rest.git.createRef({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        ref: `refs/heads/${itemObject.slug}`,
+        sha: github.context.sha
+      });
+    } catch (error) {
+      core.setFailed(`GitHub branch was not created: ${error}`);
+    }
+  }  
 }
 
 async function create_or_update_file(octokit, itemObject, config, branch) {
-
-
   // Use octokit to create a new file in the new branch
   // Base 64 encode the content
 
@@ -125,7 +143,7 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
     }
   }
 
-  // Check that the extension has a dot
+  // Check that the extension begins with a dot
   if (config.extension[0] !== ".") {
     config.extension = `.${config.extension}`;
   }
@@ -144,9 +162,31 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
   }
 }
 
-async function create_pull_request(octokit, itemObject, file) {
+async function create_pull_request(octokit, itemObject, config, file) {
+
+  // If the config contains a branch prefix, add it to the branch name
+  if (config.branch_prefix !== "") {
+    itemObject.slug = `${config.branch_prefix}-${itemObject.slug}`;
+  }
+
   // Use octokit to create a new pull request
   try {
+
+    // Check if pull request already exists between the branch and main
+    const pullRequest = await octokit.rest.pulls.list({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      head: `${github.context.repo.owner}:${itemObject.slug}`,
+      base: "main"
+    });
+
+    // If the pull request exists, return it
+    if (pullRequest.data.length > 0) {
+      core.info(`Pull request for ${itemObject.slug} already exists, using existing reference.`);
+      return pullRequest;
+    }
+
+    // If the pull request doesn't exist, create it
     return octokit.rest.pulls.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,

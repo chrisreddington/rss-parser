@@ -15,7 +15,8 @@ async function run() {
   const config = {
     script_output: core.getInput('script_output'),
     subfolder: core.getInput('subfolder'),
-    extension: core.getInput('extension')
+    extension: core.getInput('extension'),
+    branch_prefix: core.getInput('branch_prefix'),
   }
 
   // If the subfolder is not provided, set it to 'social'

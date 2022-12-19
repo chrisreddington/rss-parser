@@ -12,6 +12,21 @@ on:
         type: string
         required: true
         default: 'issue'
+      subfolder:
+        description: "Subfolder used to create files when pull_request mode is set"
+        type: string
+        required: true
+        default: 'social'
+      extension:
+        description: "File extension used when pull_request mode is set"
+        type: string
+        required: true
+        default: '.tweets'
+      branch_prefix:
+        description: "File extension used when pull_request mode is set"
+        type: string
+        required: true
+        default: 'twitter'
 jobs:
   manual_rss_feed_execution:
     runs-on: ubuntu-latest
