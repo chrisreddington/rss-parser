@@ -118,7 +118,7 @@ async function parse_feed(octokit, items, script_output) {
           repo: github.context.repo.repo,
           title: itemObject.title,
           head: itemObject.slug,
-          base: "master"
+          base: "main"
         });
       } catch (error) {
         core.setFailed(`GitHub pull request was not created: ${error}`);
