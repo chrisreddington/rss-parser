@@ -42,10 +42,23 @@ async function parse_feed(octokit, items, script_output) {
   [...items].forEach((item) => {
     this.itemCount++;
 
+    // Get the slug from the URL
+    let slug;
+    let slugArray = item.querySelector("link").textContent.split("/");
+
+    // If the last item in the array is empty, use the second to last item
+    // Otherwise, use the last item
+    if (slugArray.pop() === "") {
+      slug = slugArray[slugArray.length - 2];
+    } else {
+      slug = slugArray[slugArray.length - 1];
+    }
+
     // Create an object of item and url
     let itemObject = {
       title: item.querySelector("title").textContent,
-      url: item.querySelector("link").textContent
+      url: item.querySelector("link").textContent,
+      slug: slug
     };
 
     if (script_output === "issue") {
@@ -67,6 +80,46 @@ async function parse_feed(octokit, items, script_output) {
         output.push(itemObject);
       } catch (error) {
         core.setFailed(`JSON output was not created: ${error}`);
+      }
+    } else if (script_output === "pull_request") {
+      
+      // Use octokit to create a new branch
+      try {
+        octokit.rest.git.createRef({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          ref: `refs/heads/${itemObject.slug}`,
+          sha: github.context.sha
+        });
+      } catch (error) {
+        core.setFailed(`GitHub branch was not created: ${error}`);
+      }
+
+      // Use octokit to create a new file in the new branch
+      try {
+        octokit.rest.repos.createOrUpdateFileContents({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          path: "/tweets/" + itemObject.slug + ".tweet",
+          message: `Create file for ${itemObject.title}`,
+          content: `${itemObject.title} - Check more at ${itemObject.url}`,
+          branch: itemObject.slug
+        });
+      } catch (error) {
+        core.setFailed(`GitHub file was not created: ${error}`);
+      }
+
+      // Use octokit to create a new pull request
+      try {
+        octokit.rest.pulls.create({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          title: itemObject.title,
+          head: itemObject.slug,
+          base: "master"
+        });
+      } catch (error) {
+        core.setFailed(`GitHub pull request was not created: ${error}`);
       }
     }
   });
