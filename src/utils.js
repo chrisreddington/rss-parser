@@ -39,7 +39,7 @@ async function fetch_feed(feed_url) {
 async function parse_feed(octokit, items, script_output) {
   let output = [];
 
-  [...items].forEach((item) => {
+  [...items].forEach(async (item) => {
     this.itemCount++;
 
     // Get the slug from the URL
@@ -82,47 +82,9 @@ async function parse_feed(octokit, items, script_output) {
         core.setFailed(`JSON output was not created: ${error}`);
       }
     } else if (script_output === "pull_request") {
-      
-      // Use octokit to create a new branch
-      try {
-        octokit.rest.git.createRef({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          ref: `refs/heads/${itemObject.slug}`,
-          sha: github.context.sha
-        });
-      } catch (error) {
-        core.setFailed(`GitHub branch was not created: ${error}`);
-      }
-
-      // Use octokit to create a new file in the new branch
-      // Base 64 encode the content
-      
-      try {
-        octokit.rest.repos.createOrUpdateFileContents({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          path: "tweets/" + itemObject.slug + ".tweet",
-          message: `Create file for ${itemObject.title}`,
-          content: Buffer.from(`${itemObject.title} - Check more at ${itemObject.url}`).toString('base64'),
-          branch: itemObject.slug
-        });
-      } catch (error) {
-        core.setFailed(`GitHub file was not created: ${error}`);
-      }
-
-      // Use octokit to create a new pull request
-      try {
-        octokit.rest.pulls.create({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          title: itemObject.title,
-          head: itemObject.slug,
-          base: "main"
-        });
-      } catch (error) {
-        core.setFailed(`GitHub pull request was not created: ${error}`);
-      }
+      const branch = await create_branch(octokit, itemObject);
+      const file = await create_or_update_file(octokit, itemObject, config, branch);
+      const pull_request = await create_pull_request(octokit, itemObject, file);
     }
   });
 
@@ -130,6 +92,71 @@ async function parse_feed(octokit, items, script_output) {
     // Return the array of items
     console.log(output);
     core.setOutput("items", output);
+  }
+}
+
+async function create_branch(octokit, itemObject) {
+  // Use octokit to create a new branch
+  try {
+    return await octokit.rest.git.createRef({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      ref: `refs/heads/${itemObject.slug}`,
+      sha: github.context.sha
+    });
+  } catch (error) {
+    core.setFailed(`GitHub branch was not created: ${error}`);
+  }
+}
+
+async function create_or_update_file(octokit, itemObject, config, branch) {
+
+
+  // Use octokit to create a new file in the new branch
+  // Base 64 encode the content
+
+  // If the subfolder is empty, don't add a slash
+  if (config.subfolder === "") {
+    config.subfolder = "";
+  } else {
+    // If the sub folder already has a slash, don't add another
+    if (config.subfolder[config.subfolder.length - 1] !== "/") {
+      config.subfolder = `${config.subfolder}/`;
+    }
+  }
+
+  // Check that the extension has a dot
+  if (config.extension[0] !== ".") {
+    config.extension = `.${config.extension}`;
+  }
+
+  try {
+    return octokit.rest.repos.createOrUpdateFileContents({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      path: `${config.subfolder}${itemObject.slug}${config.extension}`,
+      message: `Create file for ${itemObject.title}`,
+      content: Buffer.from(`${itemObject.title} - Check more at ${itemObject.url}`).toString('base64'),
+      branch: itemObject.slug
+    });
+  } catch (error) {
+    core.setFailed(`GitHub file was not created: ${error}`);
+  }
+}
+
+async function create_pull_request(octokit, itemObject, file) {
+  // Use octokit to create a new pull request
+  try {
+    return octokit.rest.pulls.create({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      title: itemObject.title,
+      head: itemObject.slug,
+      base: "main",
+      sha: github.context.sha
+    });
+  } catch (error) {
+    core.setFailed(`GitHub pull request was not created: ${error}`);
   }
 }
 
