@@ -54,6 +54,11 @@ async function parse_feed(octokit, items, config) {
       slug = slugArray[slugArray.length - 1]
     }    
 
+    // If the config contains a branch prefix, add it to the slig name
+    if (config.branch_prefix !== "") {
+      slug = `${config.branch_prefix}-${slug}`;
+    }
+
     // Create an object of item and url
     let itemObject = {
       title: item.querySelector("title").textContent,
@@ -96,12 +101,6 @@ async function parse_feed(octokit, items, config) {
 }
 
 async function create_branch(octokit, itemObject, config) {
-
-  // If the config contains a branch prefix, add it to the branch name
-  if (config.branch_prefix !== "") {
-    itemObject.slug = `${config.branch_prefix}-${itemObject.slug}`;
-  }
-
   // Check if the branch already exists
   try {
     const branch = await octokit.rest.git.getRef({
@@ -163,12 +162,6 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
 }
 
 async function create_pull_request(octokit, itemObject, config, file) {
-
-  // If the config contains a branch prefix, add it to the branch name
-  if (config.branch_prefix !== "") {
-    itemObject.slug = `${config.branch_prefix}-${itemObject.slug}`;
-  }
-
   // Use octokit to create a new pull request
   try {
 

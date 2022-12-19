@@ -12,7 +12,7 @@ async function run() {
   const feed_url = core.getInput('feed_url');
 
   // Set the config object from the actions inputs
-  const config = {
+  let config = {
     script_output: core.getInput('script_output'),
     subfolder: core.getInput('subfolder'),
     extension: core.getInput('extension'),

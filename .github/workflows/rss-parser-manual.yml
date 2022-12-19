@@ -13,17 +13,17 @@ on:
         required: true
         default: 'issue'
       subfolder:
-        description: "Subfolder used to create files when pull_request mode is set"
+        description: "Subfolder (used when pull_request mode is set)"
         type: string
         required: false
-        default: 'social'
+        default: 'twitter'
       extension:
-        description: "File extension used when pull_request mode is set"
+        description: "File extension (used when pull_request mode is set)"
         type: string
         required: false
         default: '.tweets'
       branch_prefix:
-        description: "File extension used when pull_request mode is set"
+        description: "Branch Prefix (used when pull_request mode is set)"
         type: string
         required: false
         default: 'twitter'
