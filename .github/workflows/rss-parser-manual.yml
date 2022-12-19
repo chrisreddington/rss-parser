@@ -15,17 +15,17 @@ on:
       subfolder:
         description: "Subfolder used to create files when pull_request mode is set"
         type: string
-        required: true
+        required: false
         default: 'social'
       extension:
         description: "File extension used when pull_request mode is set"
         type: string
-        required: true
+        required: false
         default: '.tweets'
       branch_prefix:
         description: "File extension used when pull_request mode is set"
         type: string
-        required: true
+        required: false
         default: 'twitter'
 jobs:
   manual_rss_feed_execution:
