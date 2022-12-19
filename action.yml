@@ -13,6 +13,18 @@ inputs:
     description: "Output of the script (e.g. issue, json)"
     required: true
     default: 'issue'
+  subfolder:
+    description: "Subfolder (used when pull_request mode is set)"
+    required: false
+    default: 'twitter'
+  extension:
+    description: "File extension (used when pull_request mode is set)"
+    required: false
+    default: '.tweets'
+  branch_prefix:
+    description: "Branch Prefix (used when pull_request mode is set)"
+    required: false
+    default: 'twitter'
 outputs:
   posts: 
     description: 'The JSON output of the posts discovered'
