@@ -284,10 +284,12 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     let last_parsed_date;
 
     // If the array contains an item with all of the same properties except the date, update the date
-    if (last_parsed_item) {
+    if (last_parsed_item !== undefined) {
+      core.info("Last parsed item found. Updating date.");
       last_parsed_date = new Date(last_parsed_item.date);
     } else {
       // If the array does not contain an item with all of the same properties except the date, add the item to the array
+      core.info("Last parsed item not found. Adding item to array.")
       last_parsed_array.push(last_parsed_object);
       is_first_run = true;
       last_parsed_date = new Date(); 
