@@ -10,17 +10,16 @@ inputs:
     required: true
     default: 'https://github.blog/feed/'
   script_output:
-    description: "Output of the script (e.g. issue, json)"
+    description: "Output of the script (e.g. issue, json, pull_request)"
     required: true
     default: 'issue'
   subfolder:
     description: "Subfolder (used when pull_request mode is set)"
     required: false
-    default: 'twitter'
   extension:
     description: "File extension (used when pull_request mode is set)"
     required: false
-    default: '.tweets'
+    default: '.social'
   branch_prefix:
     description: "Branch Prefix (used when pull_request mode is set)"
     required: false

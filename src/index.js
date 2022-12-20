@@ -12,45 +12,19 @@ async function run() {
   const feed_url = core.getInput('feed_url');
 
   // Setup the config object to hold the inputs from the workflow.
-  let config = {};
+  let config = {
+    branch_prefix: core.getInput('branch_prefix'),
+    extension: core.getInput('extension'),
+    last_parsed_file: core.getInput('last_parsed_file'),
+    script_output: core.getInput('script_output'),
+    subfolder: core.getInput('subfolder')
+  };
 
-  config.script_output = core.getInput('script_output');
-  config.subfolder = core.getInput('subfolder');
-  config.extension = core.getInput('extension');
-  config.branch_prefix = core.getInput('branch_prefix');
-  config.last_parsed_file = core.getInput('last_parsed_file');
+  // Validate the config
+  config = await validate_config(config);
 
-  core.debug(`Config: ${JSON.stringify(config)}`);
-
-  // If the subfolder is not provided, set it to 'social'
-  if (config.subfolder === '') {
-    config.subfolder = 'social';
-  }
-
-  // If the subfolder is empty, don't add a slash
-  if (config.subfolder === "") {
-    config.subfolder = "";
-  } else {
-    // If the sub folder already has a slash, don't add another
-    if (config.subfolder[config.subfolder.length - 1] !== "/") {
-      config.subfolder = `${config.subfolder}/`;
-    }
-  }
-
-  // If the extension is not provided, set it to '.social'
-  if (config.extension === '') {
-    config.extension = '.social';
-  }
-
-  // Check that the extension begins with a dot
-  if (config.extension[0] !== ".") {
-    config.extension = `.${config.extension}`;
-  }
-
-  // If the last parsed file is not provided, set it to 'rss-parser-last-parsed.json'
-  if (config.last_parsed_file === '') {
-    config.last_parsed_file = 'rss-parser-last-parsed.json';
-  }
+  // Output the config to the debug log
+  core.debug(`config: ${JSON.stringify(config)}`);
     
   // Authenticate the Octokit REST client with the token provided as an input into the GitHub Action
   const github_token = core.getInput('github_token');
@@ -61,9 +35,15 @@ async function run() {
 
   // Fetch the RSS feed from the provided URL
   let items = await utils.fetch_feed(feed_url);
+  
+  // Output the items to the debug log
+  core.debug(`items: ${JSON.stringify([...items])}`);
 
+  // Check if a parse is needed
   let last_parsed_result = await utils.check_last_parsed(feed_url, octokit, items, config);
+  core.debug(`last_parsed_result: ${JSON.stringify(last_parsed_result)}`);
 
+  // If a parse is needed, parse the feed and take appropriate action
   if (last_parsed_result !== 'no_need_to_process') {
     // Parse the RSS feed and take appropriate action
     await utils.parse_feed(octokit, items, config);

@@ -10,15 +10,16 @@ const { JSDOM } = jsdom;
 
 // itemCount is used for test purposes
 let itemCount = 0;
+let current_parse_date;
 
 // Function to check that the provided URL is 
 // valid (and begins with http or https)
 async function check_url(feed_url) {
   try {
     url = new URL(feed_url);
-    
+
     // Check that the URL begins with http or https
-    if (url.protocol !== "http:" && url.protocol !== "https:") {   
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
       core.setFailed(`URL does not begin with http or https: ${input}`);
     }
   } catch (_) {
@@ -54,8 +55,6 @@ async function create_branch(octokit, branch_name, config) {
 
 async function create_issue(octokit, itemObject) {
   try {
-    // TODO: Check if the issue already exists
-    // TODO: Use a custom template for the issue body
     octokit.rest.issues.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
@@ -75,8 +74,8 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
     const file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      path: `${config.subfolder}${itemObject.slug}${config.extension}`,
       ref: `refs/heads/${itemObject.slug}`,
+      path: `${config.subfolder}${itemObject.slug}${config.extension}`
     });
 
     core.info(`File ${itemObject.slug} already exists, doing nothing.`);
@@ -86,12 +85,12 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
       return octokit.rest.repos.createOrUpdateFileContents({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
+        branch: itemObject.slug,
         path: `${config.subfolder}${itemObject.slug}${config.extension}`,
-        message: `Create file for ${itemObject.title}`,
         content: Buffer.from(
           `${itemObject.title} - Check more at ${itemObject.url}`
         ).toString("base64"),
-        branch: itemObject.slug,
+        message: `Create file for ${itemObject.title}`,
       });
     } catch (error) {
       core.setFailed(`GitHub file was not created: ${error}`);
@@ -120,10 +119,10 @@ async function create_pull_request(octokit, itemObject, config) {
     return octokit.rest.pulls.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      title: itemObject.title,
       head: itemObject.slug,
-      base: "main",
       sha: github.context.sha,
+      base: "main",
+      title: itemObject.title
     });
   } catch (error) {
     core.setFailed(`GitHub pull request was not created: ${error}`);
@@ -135,6 +134,7 @@ async function create_pull_request(octokit, itemObject, config) {
 async function fetch_feed(feed_url) {
   try {
     const response = await got(feed_url);
+    current_parse_date = new Date();
     const feedOutput = new JSDOM(response.body, { contentType: "text/xml" });
     const items = feedOutput.window.document.querySelectorAll("item");
     return items;
@@ -207,133 +207,145 @@ async function parse_feed(octokit, items, config) {
 }
 
 async function check_last_parsed(feed_url, octokit, items, config) {
-  // Function to create or update the last_parsed file
+  // Instantiate variables
+  let config_last_parsed_records_file;
+  let config_last_parsed_records_content;
+
+  // Initialise variables
   let config_branch = `${config.branch_prefix}-config`;
-  let last_parsed_file_contents;
-  let is_first_run = false;
-  let last_parsed_file;
-  let last_parsed_object = {
-    date: new Date().toISOString(),
-    feed_url: feed_url,
-    subfolder: config.subfolder,
-    script_output: config.script_output,
+  let is_new_config_last_parsed_record = false;
+  let local_config_last_parsed_record = {
     branch_prefix: config.branch_prefix,
+    date: new Date().toISOString(),
     extension: config.extension,
+    feed_url: feed_url,
+    script_output: config.script_output,
+    subfolder: config.subfolder
   };
 
-  
+  // Check that the last parsed file exists
   try {
     // Get the last parsed file
-    last_parsed_file = await octokit.rest.repos.getContent({
+    config_last_parsed_records_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      path: config.last_parsed_file,
       ref: `refs/heads/${config_branch}`,
+      path: config.last_parsed_file,
     });
 
-    last_parsed_file_contents = last_parsed_file.data.content;
-
-    core.debug("Last parsed file exists. Performing checks.");
+    // Get the data from the config last parsed record
+    config_last_parsed_records_content = config_last_parsed_records_file.data.content;
+    core.debug("[check_last_parsed] Last parsed file exists for this configuration. Performing checks...");
   } catch (error) {
-    core.debug(`Error: ${error} - Attempting to create config file...`);
-    let last_parsed_array = [last_parsed_object];
+    // If we're here, it's likely we received a 404 from the getContent call.
+    // Output that the config last parsed file does not exist
+    core.debug(`[check_last_parsed] Error: ${error} -- Attempting to create config file...`);
 
-    let branch = await create_branch (octokit, config_branch, config);
+    // It doesn't exist, so create an array with a new config last parsed record
+    let config_last_parsed_records_array = [local_config_last_parsed_record];
 
-    if (branch !== null){
-      // Write the new array to the file
+    // Initialise the file if the branch exists (if it doesn't, it will be created)
+    let branch = await create_branch(octokit, config_branch, config);
+    if (branch !== null) {
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        path: `${config.last_parsed_file}`,
-        message: `Initialise the last-parsed config file ${config.last_parsed_file}`,
-        content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
+        branch: config_branch,
+        path: config.last_parsed_file,
+        content: Buffer.from(JSON.stringify(config_last_parsed_records_array)).toString(
           "base64"
         ),
-        branch: config_branch,
+        message: `Initialise the config last parsed records file (${config.last_parsed_file})`,
       });
 
       // Convert last_parsed_array to a JSON string, and translate the output
       // into a base64 string
-      last_parsed_file_contents = Buffer.from(
-        JSON.stringify(last_parsed_array)
+      config_last_parsed_records_content = Buffer.from(
+        JSON.stringify(config_last_parsed_records_array)
       ).toString("base64");
 
-      return JSON.stringify(last_parsed_array);
+      return JSON.stringify(config_last_parsed_records_array);
     }
   }
 
-  try {    
-    // Assume the file contains a valid JSON array
-
+  // Check whether the current config exists in the config last parsed records
+  try {
     // Convert the base64 string to a JSON array
-    let last_parsed_array = JSON.parse(
-      Buffer.from(last_parsed_file_contents, "base64").toString()
+    let config_last_parsed_records_array = JSON.parse(
+      Buffer.from(config_last_parsed_records_content, "base64").toString()
     );
+    // Initialise last_parsed_date
+    let config_last_parsed_date;
 
     // Check if the array contains an item with all of the same properties except the date
-    const last_parsed_item = last_parsed_array.find(
+    const current_config_exist_check = config_last_parsed_records_array.find(
       (item) =>
-        item.feed_url === last_parsed_object.feed_url &&
-        item.subfolder === last_parsed_object.subfolder &&
-        item.script_output === last_parsed_object.script_output &&
-        item.branch_prefix === last_parsed_object.branch_prefix &&
-        item.extension === last_parsed_object.extension
+        item.branch_prefix === local_config_last_parsed_record.branch_prefix &&
+        item.extension === local_config_last_parsed_record.extension && 
+        item.feed_url === local_config_last_parsed_record.feed_url &&
+        item.script_output === local_config_last_parsed_record.script_output && 
+        item.subfolder === local_config_last_parsed_record.subfolder
     );
-
-    let last_parsed_date;
-
-    // If the array contains an item with all of the same properties except the date, update the date
-    if (last_parsed_item !== undefined) {
-      core.info("Last parsed item found. Updating date.");
-      last_parsed_date = new Date(last_parsed_item.date);
+    
+    // If the array contains an item with all of the same properties except the date, 
+    // then we know the current config has been run before and the date it was ran.
+    if (current_config_exist_check !== undefined) {
+      config_last_parsed_date = new Date(current_config_exist_check.date);
+      core.debug(`[check_last_parsed] Last parsed item found. Setting last parsed date to ${config_last_parsed_date}.`);
     } else {
       // If the array does not contain an item with all of the same properties except the date, add the item to the array
-      core.info("Last parsed item not found. Adding item to array.")
-      last_parsed_array.push(last_parsed_object);
-      is_first_run = true;
-      last_parsed_date = new Date(); 
+      core.info("[check_last_parsed] Config last parsed record not found. Adding the current config last parsed record to the array...")
+      config_last_parsed_records_array.push(local_config_last_parsed_record);
+      is_new_config_last_parsed_record = true;
+      config_last_parsed_date = new Date();
     }
 
-    // Sort items by date
+    // Output the last parsed date and first run bool for debugging
+    core.debug("[check_last_parsed] last_parsed_date: " + config_last_parsed_date);
+    core.debug("[check_last_parsed] is_first_run: " + is_new_config_last_parsed_record);
 
-    // Print the type of the items variable
-    core.debug(`Type of items: ${typeof items}`);
-    
+    // RSS Feeds are not required to be in chronological order,
+    // so sort the items by date and get the date of the last item
     [...items].sort((a, b) => {
       return new Date(a.querySelector("pubDate").textContent) -
         new Date(b.querySelector("pubDate").textContent);
     });
 
-    // Get the date of the last item in the RSS feed
     const last_item_date = new Date(
       [...items][items.length - 1].querySelector("pubDate").textContent
     );
 
-    // If the last parsed date is after the last item date, and this is not
-    // the first run, return no_need_to_process
-    if (last_parsed_date > last_item_date && !is_first_run) {
-      core.debug("The last parsed date is after the last item date. No need to process the posts.");
+    // Output the last item date for debugging
+    core.debug("[check_last_parsed] last_item_date: " + last_item_date);
+
+    // If the last parsed date is greater than the last item date (i.e. no new items)
+    // and this is not the first run, return no_need_to_process
+    if (config_last_parsed_date > last_item_date && !is_new_config_last_parsed_record) {
+      core.debug("[check_last_parsed] The last parsed date is after the last item date. No need to process the posts.");
       return "no_need_to_process";
     }
 
-    // If the last parsed date is before the last item date, or this is the first run, return process_posts
+    if (is_new_config_last_parsed_record) {
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        branch: config_branch,
+        sha: config_last_parsed_records_file.data.sha,
+        path: `${config.last_parsed_file}`,
+        content: Buffer.from(JSON.stringify(config_last_parsed_records_array)).toString(
+          "base64"
+        ),
+        message: `Update the last-parsed config file ${config.last_parsed_file}`,
+      });
+    }
 
-    // Write the new array to the file
-    await octokit.rest.repos.createOrUpdateFileContents({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      path: `${config.last_parsed_file}`,
-      message: `Update the last-parsed config file ${config.last_parsed_file}`,
-      content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
-        "base64"
-      ),
-      sha: last_parsed_file.data.sha,
-      branch: config_branch,
-    });    
+    // If we have reached this point, then -
+    // 1. The last parsed date is before the last item date (i.e. newer posts)
+    // 2. This is the first run (e.g. There's a new set of configuration parameters
+    // Return need_to_process
     return "need_to_process";
   } catch (error) {
-    core.setFailed(`Encountered an issue when checking last parsed config: ${error}`);
+    core.setFailed(`last_item_date Encountered an issue: ${error}`);
   }
 }
 
@@ -341,57 +353,83 @@ async function update_last_parsed(feed_url, octokit, config) {
   let config_branch = `${config.branch_prefix}-config`;
   try {
     // Get the last parsed file
-    const last_parsed_file = await octokit.rest.repos.getContent({
+    const config_last_parsed_records_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      path: `${config.last_parsed_file}`,
       ref: `refs/heads/${config_branch}`,
+      path: `${config.last_parsed_file}`,
     });
-  
-    // Get contents of last parsed file
-    const last_parsed_file_contents = Buffer.from(
-      last_parsed_file.data.content,
-      "base64"
-    ).toString();
 
     // Convert the base64 string to a JSON array
     let last_parsed_array = JSON.parse(
-      Buffer.from(last_parsed_file.data.content, "base64").toString()
+      Buffer.from(config_last_parsed_records_file.data.content, "base64").toString()
     );
 
     // Check if the array contains an item with all of the same properties except the date
-    const last_parsed_item = last_parsed_array.find(
+    const current_config_last_parsed_record = last_parsed_array.find(
       (item) =>
-        item.feed_url === feed_url &&
-        item.subfolder === config.subfolder &&
-        item.script_output === config.script_output &&
         item.branch_prefix === config.branch_prefix &&
-        item.extension === config.extension
+        item.extension === config.extension && 
+        item.feed_url === feed_url &&
+        item.script_output === config.script_output &&
+        item.subfolder === config.subfolder
     );
 
     // If the array contains an item with all of the same properties except the date, update the date
-    if (last_parsed_item) {
-      last_parsed_item.date = new Date().toISOString();
+    if (current_config_last_parsed_record) {
+      current_config_last_parsed_record.date = current_parse_date.toISOString();
+      core.debug(`[update_last_parsed] Updated the last parsed date for the current config to ${current_parse_date.toISOString()}.`);
     }
-
 
     // Write the new array to the file
     await octokit.rest.repos.createOrUpdateFileContents({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
+      branch: config_branch,
+      sha: config_last_parsed_records_file.data.sha,
       path: `${config.last_parsed_file}`,
-      message: `Update the last-parsed config file ${config.last_parsed_file}`,
       content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
         "base64"
       ),
-      branch: config_branch,
-      sha: last_parsed_file.data.sha,
+      message: `Update the last-parsed config file ${config.last_parsed_file}`,
     });
 
     return JSON.stringify(last_parsed_array);
   } catch (error) {
-    core.setFailed(`Encountered an issue when updating last parsed config: ${error}`);
+    core.setFailed(`[update_last_parsed] Encountered an issue: ${error}`);
   }
+}
+
+async function validate_config (config){
+  // If the extension does not start with a dot, add one
+  if (config.extension[0] !== ".") {
+    config.extension = `.${config.extension}`;
+    core.info("[validate_config] Adding a dot to the beginning of the extension. Please update your input to include the dot.");
+  }
+
+  // Check that the extension only contains alphanumeric characters
+  if (!/^\.[a-zA-Z0-9]+$/.test(config.extension)) {
+    core.setFailed(`[validate_config] The extension parameter must only contain alphanumeric characters.`);
+  }
+  
+  // If the script output is not in a list of valid script outputs, cause the action to fail
+  if (!['issue', 'json', 'pull_request'].includes(config.script_output)) {
+    core.setFailed(`[validate_config] The script_output parameter must be either 'issue', 'json' or 'pull_request'.`);
+  }
+
+  // If the subfolder is empty, don't add a slash
+  // If the configured subfolder is just a /, remove it - Files in the 
+  // parent directory should not have a slash
+  if (config.subfolder === "" || config.subfolder === "/") {
+    config.subfolder = "";
+  } else {
+    // If the sub folder already has a slash, don't add another
+    if (config.subfolder[config.subfolder.length - 1] !== "/") {
+      config.subfolder = `${config.subfolder}/`;
+    }
+  }
+
+  return config
 }
 
 module.exports = {
@@ -400,5 +438,6 @@ module.exports = {
   fetch_feed,
   parse_feed,
   update_last_parsed,
+  validate_config,
   itemCount,
 };
