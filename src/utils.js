@@ -241,7 +241,7 @@ async function check_last_parsed(feed_url, octokit, items, config) {
       content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
         "base64"
       ),
-      branch: "main",
+      branch: `${config.branch_prefix}-config`,
     });
 
     last_parsed_file.data.content = Buffer.from(JSON.stringify(last_parsed_array)).toString(
@@ -344,7 +344,7 @@ async function update_last_parsed(feed_url, octokit, config) {
       content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
         "base64"
       ),
-      branch: "main",
+      branch: `${config.branch_prefix}-config`,
     });
 
     return JSON.stringify(last_parsed_array);
