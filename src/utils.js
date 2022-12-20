@@ -31,7 +31,7 @@ async function create_branch(octokit, branch_name, config) {
     const branch = await octokit.rest.git.getRef({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      ref: `heads/${branch_name}`,
+      ref: `refs/heads/${branch_name}`,
     });
 
     // If the branch already exists, use the existing reference
@@ -230,7 +230,7 @@ async function check_last_parsed(feed_url, octokit, items, config) {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       path: config.last_parsed_file,
-      branch: config_branch,
+      ref: `refs/heads/${config_branch}`,
     });
 
     core.debug("Last parsed file exists. Performing checks.");
@@ -319,7 +319,7 @@ async function update_last_parsed(feed_url, octokit, config) {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       path: `${config.last_parsed_file}`,
-      branch: config_branch
+      ref: `refs/heads/${config_branch}`,
     });
   
     // Get contents of last parsed file
