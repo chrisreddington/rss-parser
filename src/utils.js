@@ -360,7 +360,7 @@ async function update_last_parsed(feed_url, octokit, config) {
       content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
         "base64"
       ),
-      branch: `config_branch`,
+      branch: config_branch,
     });
 
     return JSON.stringify(last_parsed_array);
