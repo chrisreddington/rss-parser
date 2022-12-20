@@ -209,7 +209,11 @@ async function parse_feed(octokit, items, config) {
 async function check_last_parsed(feed_url, octokit, items, config) {
   // Function to create or update the last_parsed file
   let config_branch = `${config.branch_prefix}-config`;
-  let last_parsed_file;
+  let last_parsed_file = {
+    data: {
+      content: ""
+    }
+  }
   let last_parsed_object = {
     date: new Date().toISOString(),
     feed_url: feed_url,
