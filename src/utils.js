@@ -210,6 +210,8 @@ async function check_last_parsed(feed_url, octokit, items, config) {
   // Function to create or update the last_parsed file
   let config_branch = `${config.branch_prefix}-config`;
   let last_parsed_file_contents;
+  let is_first_run = false;
+  let last_parsed_file;
   let last_parsed_object = {
     date: new Date().toISOString(),
     feed_url: feed_url,
@@ -222,7 +224,7 @@ async function check_last_parsed(feed_url, octokit, items, config) {
   
   try {
     // Get the last parsed file
-    let last_parsed_file = await octokit.rest.repos.getContent({
+    last_parsed_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       path: config.last_parsed_file,
@@ -285,7 +287,9 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     if (last_parsed_item) {
       last_parsed_date = new Date(last_parsed_item.date);
     } else {
-      // Set last_parsed_date to the current time
+      // If the array does not contain an item with all of the same properties except the date, add the item to the array
+      last_parsed_array.push(last_parsed_object);
+      is_first_run = true;
       last_parsed_date = new Date(); 
     }
 
@@ -304,11 +308,28 @@ async function check_last_parsed(feed_url, octokit, items, config) {
       [...items][items.length - 1].querySelector("pubDate").textContent
     );
 
-    // If the last parsed date is after the last item date, exit the script
-    if (last_parsed_date > last_item_date) {
+    // If the last parsed date is after the last item date, and this is not
+    // the first run, return no_need_to_process
+    if (last_parsed_date > last_item_date && !is_first_run) {
       core.debug("The last parsed date is after the last item date. No need to process the posts.");
       return "no_need_to_process";
     }
+
+    // If the last parsed date is before the last item date, or this is the first run, return process_posts
+
+    // Write the new array to the file
+    await octokit.rest.repos.createOrUpdateFileContents({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      path: `${config.last_parsed_file}`,
+      message: `Update the last-parsed config file ${config.last_parsed_file}`,
+      content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
+        "base64"
+      ),
+      sha: last_parsed_file.data.sha,
+      branch: config_branch,
+    });    
+    return "need_to_process";
   } catch (error) {
     core.setFailed(`Encountered an issue when checking last parsed config: ${error}`);
   }
