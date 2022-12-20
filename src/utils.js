@@ -209,17 +209,17 @@ async function parse_feed(octokit, items, config) {
 async function check_last_parsed(feed_url, octokit, items, config) {
   // Function to create or update the last_parsed file
   let last_parsed_file;
+  let last_parsed_object = {
+    date: new Date().toISOString(),
+    feed_url: feed_url,
+    subfolder: config.subfolder,
+    script_output: config.script_output,
+    branch_prefix: config.branch_prefix,
+    extension: config.extension,
+  };
+
   
   try {
-    let last_parsed_object = {
-      date: new Date().toISOString(),
-      feed_url: feed_url,
-      subfolder: config.subfolder,
-      script_output: config.script_output,
-      branch_prefix: config.branch_prefix,
-      extension: config.extension,
-    };
-
     // Get the last parsed file
     last_parsed_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
