@@ -351,6 +351,7 @@ async function update_last_parsed(feed_url, octokit, config) {
       last_parsed_item.date = new Date().toISOString();
     }
 
+
     // Write the new array to the file
     await octokit.rest.repos.createOrUpdateFileContents({
       owner: github.context.repo.owner,
@@ -361,6 +362,7 @@ async function update_last_parsed(feed_url, octokit, config) {
         "base64"
       ),
       branch: config_branch,
+      sha: last_parsed_file.data.sha,
     });
 
     return JSON.stringify(last_parsed_array);
