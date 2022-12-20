@@ -26,16 +26,16 @@ async function check_url(feed_url) {
   }
 }
 
-async function create_branch(octokit, itemObject, config) {
+async function create_branch(octokit, branch_name, config) {
   try {
     const branch = await octokit.rest.git.getRef({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      ref: `heads/${itemObject.slug}`,
+      ref: `heads/${branch_name}`,
     });
 
     // If the branch already exists, use the existing reference
-    core.info(`Branch ${itemObject.slug} already exists, using existing reference.`);
+    core.info(`Branch ${branch_name} already exists, using existing reference.`);
     return branch;
   } catch (error) {
     // If the branch doesn't exist (i.e. not found), create it
@@ -43,7 +43,7 @@ async function create_branch(octokit, itemObject, config) {
       return await octokit.rest.git.createRef({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        ref: `refs/heads/${itemObject.slug}`,
+        ref: `refs/heads/${branch_name}`,
         sha: github.context.sha,
       });
     } catch (error) {
@@ -183,7 +183,7 @@ async function parse_feed(octokit, items, config) {
         output = [...output, itemObject];
         break;
       case "pull_request":
-        const branch = await create_branch(octokit, itemObject, config);
+        const branch = await create_branch(octokit, itemObject.slug, config);
         const file = await create_or_update_file(
           octokit,
           itemObject,
@@ -208,6 +208,7 @@ async function parse_feed(octokit, items, config) {
 
 async function check_last_parsed(feed_url, octokit, items, config) {
   // Function to create or update the last_parsed file
+  let config_branch = `${config.branch_prefix}-config`;
   let last_parsed_file;
   let last_parsed_object = {
     date: new Date().toISOString(),
@@ -232,22 +233,26 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     core.debug("Last parsed file does not exist, creating it now.");
     let last_parsed_array = [last_parsed_object];
 
-    // Write the new array to the file
-    await octokit.rest.repos.createOrUpdateFileContents({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      path: `${config.subfolder}${config.last_parsed_file}`,
-      message: `Initialise the last-parsed config file ${config.last_parsed_file}`,
-      content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
-        "base64"
-      ),
-      branch: `${config.branch_prefix}-config`,
-    });
+    let branch = await create_branch (octokit, config_branch, config);
 
-    last_parsed_file.data.content = Buffer.from(JSON.stringify(last_parsed_array)).toString(
-      "base64"
-    );
-    return JSON.stringify(last_parsed_array);
+    if (branch){
+      // Write the new array to the file
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        path: `${config.subfolder}${config.last_parsed_file}`,
+        message: `Initialise the last-parsed config file ${config.last_parsed_file}`,
+        content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
+          "base64"
+        ),
+        branch: config_branch,
+      });
+  
+      last_parsed_file.data.content = Buffer.from(JSON.stringify(last_parsed_array)).toString(
+        "base64"
+      );
+      return JSON.stringify(last_parsed_array);
+    }
   }
 
   try {
