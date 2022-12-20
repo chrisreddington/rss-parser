@@ -294,7 +294,7 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     // Print the type of the items variable
     core.debug(`Type of items: ${typeof items}`);
     
-    items.sort((a, b) => {
+    [...items].sort((a, b) => {
       return new Date(a.querySelector("pubDate").textContent) -
         new Date(b.querySelector("pubDate").textContent);
     });
