@@ -263,8 +263,11 @@ async function check_last_parsed(feed_url, octokit, items, config) {
 
   try {    
     // Assume the file contains a valid JSON array
-    let last_parsed_raw = JSON.parse(last_parsed_file_contents);
-    last_parsed_array = last_parsed_raw.map((item) => JSON.parse(item));
+
+    // Convert the base64 string to a JSON array
+    let last_parsed_array = JSON.parse(
+      Buffer.from(last_parsed_file_contents, "base64").toString()
+    );
 
     // Check if the array contains an item with all of the same properties except the date
     const last_parsed_item = last_parsed_array.find(
