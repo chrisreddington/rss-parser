@@ -18,6 +18,7 @@ async function run() {
   config.subfolder = core.getInput('subfolder');
   config.extension = core.getInput('extension');
   config.branch_prefix = core.getInput('branch_prefix');
+  config.last_parsed_file = core.getInput('last_parsed_file');
 
   core.debug(`Config: ${JSON.stringify(config)}`);
 
@@ -45,6 +46,11 @@ async function run() {
   if (config.extension[0] !== ".") {
     config.extension = `.${config.extension}`;
   }
+
+  // If the last parsed file is not provided, set it to 'rss-parser-last-parsed.json'
+  if (config.last_parsed_file === '') {
+    config.last_parsed_file = 'rss-parser-last-parsed.json';
+  }
     
   // Authenticate the Octokit REST client with the token provided as an input into the GitHub Action
   const github_token = core.getInput('github_token');
@@ -56,8 +62,14 @@ async function run() {
   // Fetch the RSS feed from the provided URL
   let items = await utils.fetch_feed(feed_url);
 
-  // Parse the RSS feed and take appropriate action
-  await utils.parse_feed(octokit, items, config);
+  let last_parsed_result = await utils.check_last_parsed(feed_url, octokit, items, config);
+
+  if (last_parsed_result !== 'no_need_to_process') {
+    // Parse the RSS feed and take appropriate action
+    await utils.parse_feed(octokit, items, config);
+    // Update the last parsed file
+    await utils.update_last_parsed(feed_url, octokit, config);
+  }
 }
 
 run();

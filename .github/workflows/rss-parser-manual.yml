@@ -27,6 +27,11 @@ on:
         type: string
         required: false
         default: 'twitter'
+      last_parsed_file:
+        description: "Filename to be used for the last parsed file (used when pull_request mode is set)"
+        type: string
+        required: false
+        default: '.github/last-parsed.json'
 jobs:
   manual_rss_feed_execution:
     runs-on: ubuntu-latest
@@ -38,3 +43,4 @@ jobs:
           subfolder: ${{ inputs.subfolder }}
           extension: ${{ inputs.extension }}
           branch_prefix: ${{ inputs.branch_prefix }}
+          last_parsed_file: ${{ inputs.last_parsed_file }}

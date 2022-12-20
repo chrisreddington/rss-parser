@@ -206,9 +206,151 @@ async function parse_feed(octokit, items, config) {
   }
 }
 
+async function check_last_parsed(feed_url, octokit, items, config) {
+  // Function to create or update the last_parsed file
+  try {
+    let last_parsed_object = {
+      date: new Date().toISOString(),
+      feed_url: feed_url,
+      subfolder: config.subfolder,
+      script_output: config.script_output,
+      branch_prefix: config.branch_prefix,
+      extension: config.extension,
+    };
+
+    // Get the last parsed file
+    const last_parsed_file = await octokit.rest.repos.getContent({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      path: `${config.subfolder}${config.last_parsed_file}`,
+    });
+
+    // Get contents of last parsed file
+    const last_parsed_file_contents = Buffer.from(
+      last_parsed_file.data.content,
+      "base64"
+    ).toString();
+    
+    // If the file is empty, create a new array with the new item
+    if (last_parsed_file_contents === "") {
+      let last_parsed_array = [last_parsed_object];
+
+      // Write the new array to the file
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        path: `${config.subfolder}${config.last_parsed_file}`,
+        message: `Initialise the last-parsed config file ${config.last_parsed_file}`,
+        content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
+          "base64"
+        ),
+        branch: "main",
+      });
+
+      return JSON.stringify(last_parsed_array);
+    }
+
+    // Assume the file contains a valid JSON array
+    let last_parsed_raw = JSON.parse(last_parsed_file_contents);
+    last_parsed_array = last_parsed_raw.map((item) => JSON.parse(item));
+
+    // Check if the array contains an item with all of the same properties except the date
+    const last_parsed_item = last_parsed_array.find(
+      (item) =>
+        item.feed_url === last_parsed_object.feed_url &&
+        item.subfolder === last_parsed_object.subfolder &&
+        item.script_output === last_parsed_object.script_output &&
+        item.branch_prefix === last_parsed_object.branch_prefix &&
+        item.extension === last_parsed_object.extension
+    );
+
+    let last_parsed_date;
+
+    // If the array contains an item with all of the same properties except the date, update the date
+    if (last_parsed_item) {
+      last_parsed_date = new Date(last_parsed_item.date);
+    } else {
+      // Set last_parsed_date to the current time
+      last_parsed_date = new Date(); 
+    }
+
+    // Sort the items by date
+    items = items.sort((a, b) => {
+      return new Date(b.querySelector("pubDate").textContent) - new Date(a.querySelector("pubDate").textContent);
+    });
+
+    // Get the date of the last item in the RSS feed
+    const last_item_date = new Date(
+      [...items][items.length - 1].querySelector("pubDate").textContent
+    );
+
+    // If the last parsed date is after the last item date, exit the script
+    if (last_parsed_date > last_item_date) {
+      core.debug("The last parsed date is after the last item date. No need to process the posts.");
+      return "no_need_to_process";
+    }
+  } catch (error) {
+    core.setFailed(`Encountered an issue when checking last parsed config: ${error}`);
+  }
+}
+
+async function update_last_parsed(feed_url, octokit, config) {
+  try {
+    // Get the last parsed file
+    const last_parsed_file = await octokit.rest.repos.getContent({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      path: `${config.last_parsed_file}`
+    });
+  
+    // Get contents of last parsed file
+    const last_parsed_file_contents = Buffer.from(
+      last_parsed_file.data.content,
+      "base64"
+    ).toString();
+
+    // Assume the file contains a valid JSON array
+    let last_parsed_raw = JSON.parse(last_parsed_file_contents);
+    last_parsed_array = last_parsed_raw.map((item) => JSON.parse(item));
+
+    // Check if the array contains an item with all of the same properties except the date
+    const last_parsed_item = last_parsed_array.find(
+      (item) =>
+        item.feed_url === feed_url &&
+        item.subfolder === config.subfolder &&
+        item.script_output === config.script_output &&
+        item.branch_prefix === config.branch_prefix &&
+        item.extension === config.extension
+    );
+
+    // If the array contains an item with all of the same properties except the date, update the date
+    if (last_parsed_item) {
+      last_parsed_item.date = new Date().toISOString();
+    }
+
+    // Write the new array to the file
+    await octokit.rest.repos.createOrUpdateFileContents({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      path: `${config.last_parsed_file}`,
+      message: `Update the last-parsed config file ${config.last_parsed_file}`,
+      content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
+        "base64"
+      ),
+      branch: "main",
+    });
+
+    return JSON.stringify(last_parsed_array);
+  } catch (error) {
+    core.setFailed(`Encountered an issue when updating last parsed config: ${error}`);
+  }
+}
+
 module.exports = {
+  check_last_parsed,
   check_url,
   fetch_feed,
   parse_feed,
+  update_last_parsed,
   itemCount,
 };

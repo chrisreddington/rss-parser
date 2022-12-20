@@ -25,6 +25,10 @@ inputs:
     description: "Branch Prefix (used when pull_request mode is set)"
     required: false
     default: 'twitter'
+  last_parsed_file:
+    description: "Filename to be used for the last parsed file (used when pull_request mode is set)"
+    required: false
+    default: '.github/last-parsed.json'
 outputs:
   posts: 
     description: 'The JSON output of the posts discovered'
