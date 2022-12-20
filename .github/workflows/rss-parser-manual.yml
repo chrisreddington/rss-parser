@@ -8,7 +8,7 @@ on:
         required: true
         default: 'https://github.blog/feed/'
       script_output:
-        description: "Output of the script (e.g. issue, json)"
+        description: "Output of the script (e.g. issue, json, pull_request)"
         type: string
         required: true
         default: 'issue'
