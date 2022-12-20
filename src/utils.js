@@ -322,6 +322,7 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     // and this is not the first run, return no_need_to_process
     if (config_last_parsed_date > last_item_date && !is_new_config_last_parsed_record) {
       core.debug("[check_last_parsed] The last parsed date is after the last item date. No need to process the posts.");
+      core.info("No new posts to process. Exiting...");
       return "no_need_to_process";
     }
 
