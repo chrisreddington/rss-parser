@@ -21,7 +21,7 @@ async function run() {
   };
 
   // Validate the config
-  config = await validate_config(config);
+  config = await utils.validate_config(config);
 
   // Output the config to the debug log
   core.debug(`config: ${JSON.stringify(config)}`);
