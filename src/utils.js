@@ -209,11 +209,7 @@ async function parse_feed(octokit, items, config) {
 async function check_last_parsed(feed_url, octokit, items, config) {
   // Function to create or update the last_parsed file
   let config_branch = `${config.branch_prefix}-config`;
-  let last_parsed_file = {
-    data: {
-      content: ""
-    }
-  }
+  let last_parsed_file_contents;
   let last_parsed_object = {
     date: new Date().toISOString(),
     feed_url: feed_url,
@@ -226,12 +222,14 @@ async function check_last_parsed(feed_url, octokit, items, config) {
   
   try {
     // Get the last parsed file
-    last_parsed_file = await octokit.rest.repos.getContent({
+    let last_parsed_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       path: config.last_parsed_file,
       ref: `refs/heads/${config_branch}`,
     });
+
+    last_parsed_file_contents = last_parsed_file.data.content;
 
     core.debug("Last parsed file exists. Performing checks.");
   } catch (error) {
@@ -252,21 +250,18 @@ async function check_last_parsed(feed_url, octokit, items, config) {
         ),
         branch: config_branch,
       });
-  
-      last_parsed_file.data.content = Buffer.from(JSON.stringify(last_parsed_array)).toString(
-        "base64"
-      );
+
+      // Convert last_parsed_array to a JSON string, and translate the output
+      // into a base64 string
+      last_parsed_file_contents = Buffer.from(
+        JSON.stringify(last_parsed_array)
+      ).toString("base64");
+
       return JSON.stringify(last_parsed_array);
     }
   }
 
-  try {
-    // Get contents of last parsed file
-    const last_parsed_file_contents = Buffer.from(
-      last_parsed_file.data.content,
-      "base64"
-    ).toString();
-    
+  try {    
     // Assume the file contains a valid JSON array
     let last_parsed_raw = JSON.parse(last_parsed_file_contents);
     last_parsed_array = last_parsed_raw.map((item) => JSON.parse(item));
