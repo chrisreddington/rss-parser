@@ -289,9 +289,14 @@ async function check_last_parsed(feed_url, octokit, items, config) {
       last_parsed_date = new Date(); 
     }
 
-    // Sort the items by date
-    items = items.sort((a, b) => {
-      return new Date(b.querySelector("pubDate").textContent) - new Date(a.querySelector("pubDate").textContent);
+    // Sort items by date
+
+    // Print the type of the items variable
+    core.debug(`Type of items: ${typeof items}`);
+    
+    items.sort((a, b) => {
+      return new Date(a.querySelector("pubDate").textContent) -
+        new Date(b.querySelector("pubDate").textContent);
     });
 
     // Get the date of the last item in the RSS feed
