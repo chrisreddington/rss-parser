@@ -229,7 +229,8 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     last_parsed_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      path: `${config.subfolder}${config.last_parsed_file}`,
+      path: `${config.last_parsed_file}`,
+      branch: config_branch,
     });
 
     core.debug("Last parsed file exists. Performing checks.");
@@ -239,12 +240,12 @@ async function check_last_parsed(feed_url, octokit, items, config) {
 
     let branch = await create_branch (octokit, config_branch, config);
 
-    if (branch){
+    if (branch !== null){
       // Write the new array to the file
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        path: `${config.subfolder}${config.last_parsed_file}`,
+        path: `${config.last_parsed_file}`,
         message: `Initialise the last-parsed config file ${config.last_parsed_file}`,
         content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
           "base64"
@@ -311,12 +312,14 @@ async function check_last_parsed(feed_url, octokit, items, config) {
 }
 
 async function update_last_parsed(feed_url, octokit, config) {
+  let config_branch = `${config.branch_prefix}-config`;
   try {
     // Get the last parsed file
     const last_parsed_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      path: `${config.last_parsed_file}`
+      path: `${config.last_parsed_file}`,
+      branch: config_branch
     });
   
     // Get contents of last parsed file
@@ -353,7 +356,7 @@ async function update_last_parsed(feed_url, octokit, config) {
       content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
         "base64"
       ),
-      branch: `${config.branch_prefix}-config`,
+      branch: `config_branch`,
     });
 
     return JSON.stringify(last_parsed_array);
