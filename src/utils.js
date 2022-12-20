@@ -208,6 +208,8 @@ async function parse_feed(octokit, items, config) {
 
 async function check_last_parsed(feed_url, octokit, items, config) {
   // Function to create or update the last_parsed file
+  let last_parsed_file;
+  
   try {
     let last_parsed_object = {
       date: new Date().toISOString(),
@@ -219,37 +221,42 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     };
 
     // Get the last parsed file
-    const last_parsed_file = await octokit.rest.repos.getContent({
+    last_parsed_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       path: `${config.subfolder}${config.last_parsed_file}`,
     });
 
+    core.debug("Last parsed file exists. Performing checks.");
+  } catch (error) {
+    core.debug("Last parsed file does not exist, creating it now.");
+    let last_parsed_array = [last_parsed_object];
+
+    // Write the new array to the file
+    await octokit.rest.repos.createOrUpdateFileContents({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      path: `${config.subfolder}${config.last_parsed_file}`,
+      message: `Initialise the last-parsed config file ${config.last_parsed_file}`,
+      content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
+        "base64"
+      ),
+      branch: "main",
+    });
+
+    last_parsed_file.data.content = Buffer.from(JSON.stringify(last_parsed_array)).toString(
+      "base64"
+    );
+    return JSON.stringify(last_parsed_array);
+  }
+
+  try {
     // Get contents of last parsed file
     const last_parsed_file_contents = Buffer.from(
       last_parsed_file.data.content,
       "base64"
     ).toString();
     
-    // If the file is empty, create a new array with the new item
-    if (last_parsed_file_contents === "") {
-      let last_parsed_array = [last_parsed_object];
-
-      // Write the new array to the file
-      await octokit.rest.repos.createOrUpdateFileContents({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        path: `${config.subfolder}${config.last_parsed_file}`,
-        message: `Initialise the last-parsed config file ${config.last_parsed_file}`,
-        content: Buffer.from(JSON.stringify(last_parsed_array)).toString(
-          "base64"
-        ),
-        branch: "main",
-      });
-
-      return JSON.stringify(last_parsed_array);
-    }
-
     // Assume the file contains a valid JSON array
     let last_parsed_raw = JSON.parse(last_parsed_file_contents);
     last_parsed_array = last_parsed_raw.map((item) => JSON.parse(item));
