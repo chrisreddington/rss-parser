@@ -229,13 +229,13 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     last_parsed_file = await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      path: `${config.last_parsed_file}`,
+      path: config.last_parsed_file,
       branch: config_branch,
     });
 
     core.debug("Last parsed file exists. Performing checks.");
   } catch (error) {
-    core.debug("Last parsed file does not exist, creating it now.");
+    core.debug(`Error: ${error} - Attempting to create config file...`);
     let last_parsed_array = [last_parsed_object];
 
     let branch = await create_branch (octokit, config_branch, config);
