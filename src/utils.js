@@ -31,7 +31,7 @@ async function create_branch(octokit, branch_name, config) {
     const branch = await octokit.rest.git.getRef({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      ref: `refs/heads/${branch_name}`,
+      ref: `heads/${branch_name}`,
     });
 
     // If the branch already exists, use the existing reference
