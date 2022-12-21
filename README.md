@@ -42,7 +42,6 @@ This is a [GitHub Action](https://docs.github.com/en/actions/learn-github-action
     # The file is deliberately not committed directly into main, in case there are branch protection rules in place. Instead, it's up to the user to merge the file into main.
     last_parsed_file: ''
 
-
     # The desired action to take once this action has executed. Required.
     # Must be one of: issue, json, pull_request
     script_output: ''
@@ -157,7 +156,27 @@ jobs:
           last_parsed_file: ${{ inputs.last_parsed_file }}
           script_output: ${{ inputs.script_output }}
           subfolder: ${{ inputs.subfolder }}
+```
 
+## Scheduled daily parse of the GitHub Blog
+
+```yaml
+name: "Daily - GitHub Blog"
+on:
+  workflow_dispatch:
+  schedule: 
+    - cron: '0 0 * * *'
+jobs:
+  github_blog_daily_parse:
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: chrisreddington/rss-parser-action@main
+        with:
+          branch_prefix: 'gh-blog'
+          extension: 'tweet'
+          feed_url: 'https://github.blog/feed/'
+          script_output: 'pull_request'
+          subfolder: 'tweets'
 ```
 
 # Contributing
