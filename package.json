@@ -1,6 +1,6 @@
 {
   "name": "rss-parser-action",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "author": "Chris Reddington <chris@cloudwithchris.com>",
   "description": "GitHub Action to Parse RSS Feeds and take action",
   "main": "dist/index.js",
@@ -30,7 +30,7 @@
     "jsdom": "^20.0.1"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.34.0",
+    "@vercel/ncc": "^0.36.0",
     "jest": "^27.2.5"
   }
 }
