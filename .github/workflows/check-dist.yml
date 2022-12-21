@@ -51,4 +51,4 @@ jobs:
           path: dist/
 
       - name: Check tests complete successfully
-        run: npm run test
+        run: NODE_OPTIONS=--experimental-vm-modules npm run test

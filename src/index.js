@@ -1,10 +1,10 @@
 // Setup core to provide an interface to the workflow commands, input and output variables, exit statuses, and debug messages.
 // Setup github to return an authenticated Octokit REST client and access to GitHub Actions contexts.
-const core = require('@actions/core');
-const github = require('@actions/github');
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 
 // Pull in utils to enable the fetching of RSS feeds and parsing of XML.
-const utils = require('./utils');
+import * as utils from './utils';
 
 // The main function to run when the action is called
 async function run() {

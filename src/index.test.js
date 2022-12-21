@@ -1,10 +1,9 @@
 // mock the github module
-const github = require('@actions/github');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+import * as github from '@actions/github';
+import { JSDOM } from 'jsdom';
 
 // Pull in utils to enable the fetching of RSS feeds and parsing of XML.
-const utils = require('./utils');
+import utils from './utils';
 
 test('Parses valid xml correctly', async () => {
 

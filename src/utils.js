@@ -1,12 +1,11 @@
 // Setup core to provide an interface to the workflow commands, input and output variables, exit statuses, and debug messages.
 // Setup github to return an authenticated Octokit REST client and access to GitHub Actions contexts.
-const core = require("@actions/core");
-const github = require("@actions/github");
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 
 // Setup packages to enable the fetching of RSS feeds and parsing of XML.
-const got = require("got");
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+import got from 'got';
+import { JSDOM } from 'jsdom';
 
 // itemCount is used for test purposes
 let itemCount = 0;
@@ -441,12 +440,12 @@ async function validate_config (config){
   return config
 }
 
-module.exports = {
+export default {
   check_last_parsed,
   check_url,
   fetch_feed,
   parse_feed,
   update_last_parsed,
   validate_config,
-  itemCount,
+  itemCount
 };

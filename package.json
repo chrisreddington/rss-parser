@@ -3,11 +3,15 @@
   "version": "0.0.3",
   "author": "Chris Reddington <chris@cloudwithchris.com>",
   "description": "GitHub Action to Parse RSS Feeds and take action",
-  "main": "dist/index.js",
+  "exports": "dist/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=14.16"
+  },
   "scripts": {
     "build": "ncc build src/index.js -o dist --license LICENSE",
     "bump": "npm version",
-    "test": "jest src"
+    "test": "jest src --config=jest.config.js"
   },
   "repository": {
     "type": "git",
