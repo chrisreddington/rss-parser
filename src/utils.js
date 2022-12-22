@@ -200,7 +200,7 @@ async function parse_feed(octokit, items, config) {
         const pull_request = await create_pull_request(
           octokit,
           itemObject,
-          file
+          config
         );
         break;
     }
