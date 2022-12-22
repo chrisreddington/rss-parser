@@ -177,6 +177,7 @@ async function parse_feed(octokit, items, config) {
     // Create an object to hold the item data
     let itemObject = {
       title: item.querySelector("title").textContent,
+      date: item.querySelector("pubDate").textContent,
       url: item.querySelector("link").textContent,
       slug: slug,
     };
@@ -184,23 +185,37 @@ async function parse_feed(octokit, items, config) {
     // Take appropriate action based on the script_output config
     switch (config.script_output) {
       case "issue":
-        const issue = await create_issue(octokit, itemObject);
+        // Check if the item has a date and if it's newer than the last parsed date
+        if (itemObject.date && new Date(itemObject.date) > last_parsed_date) {
+          const issue = await create_issue(octokit, itemObject);
+          break;
+        }
+        core.info(
+          `Item ${itemObject.title} is older than the last parsed date, so has already been parsed. Skipping.`
+        );
         break;
       case "json":
         output = [...output, itemObject];
         break;
       case "pull_request":
-        const branch = await create_branch(octokit, itemObject.slug, config);
-        const file = await create_or_update_file(
-          octokit,
-          itemObject,
-          config,
-          branch
-        );
-        const pull_request = await create_pull_request(
-          octokit,
-          itemObject,
-          config
+        // Check if the item has a date and if it's newer than the last parsed date
+        if (itemObject.date && new Date(itemObject.date) > last_parsed_date) {
+          const branch = await create_branch(octokit, itemObject.slug, config);
+          const file = await create_or_update_file(
+            octokit,
+            itemObject,
+            config,
+            branch
+          );
+          const pull_request = await create_pull_request(
+            octokit,
+            itemObject,
+            config
+          );
+          break;
+        }
+        core.info(
+          `Item ${itemObject.title} is older than the last parsed date, so has already been parsed. Skipping.`
         );
         break;
     }
