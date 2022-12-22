@@ -200,7 +200,7 @@ async function parse_feed(octokit, items, config) {
         break;
       case "pull_request":
         // Check if the item has a date and if it's newer than the last parsed date
-        if (itemObject.date && new Date(itemObject.date) > last_parsed_date) {
+        if (itemObject.date && new Date(itemObject.date) > config_last_parsed_date) {
           const branch = await create_branch(octokit, itemObject.slug, config);
           const file = await create_or_update_file(
             octokit,
