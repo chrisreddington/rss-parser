@@ -21,9 +21,13 @@ async function check_url(feed_url) {
     // Check that the URL begins with http or https
     if (url.protocol !== "http:" && url.protocol !== "https:") {
       core.setFailed(`URL does not begin with http or https: ${input}`);
+      return false;
     }
+
+    return true;
   } catch (_) {
     core.setFailed(`${feed_url} is not a valid URL`);
+    return false;
   }
 }
 
@@ -431,11 +435,13 @@ async function validate_config (config){
   // Check that the extension only contains alphanumeric characters
   if (!/^\.[a-zA-Z0-9]+$/.test(config.extension)) {
     core.setFailed(`[validate_config] The extension parameter must only contain alphanumeric characters.`);
+    return {};
   }
   
   // If the script output is not in a list of valid script outputs, cause the action to fail
   if (!['issue', 'json', 'pull_request'].includes(config.script_output)) {
     core.setFailed(`[validate_config] The script_output parameter must be either 'issue', 'json' or 'pull_request'.`);
+    return {};
   }
 
   // If the subfolder is empty, don't add a slash
