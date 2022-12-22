@@ -36,7 +36,7 @@ jobs:
   manual_rss_feed_execution:
     runs-on: ubuntu-latest
     steps: 
-      - uses: chrisreddington/rss-parser-action@main
+      - uses: chrisreddington/rss-parser-action@dependabot/npm_and_yarn/got-12.5.3
         with:
           feed_url: ${{ inputs.feed_url }}
           script_output: ${{ inputs.script_output }}
