@@ -15,7 +15,7 @@ let current_parse_date;
 // valid (and begins with http or https)
 export async function check_url(feed_url) {
   try {
-    url = new URL(feed_url);
+    let url = new URL(feed_url);
 
     // Check that the URL begins with http or https
     if (url.protocol !== "http:" && url.protocol !== "https:") {
