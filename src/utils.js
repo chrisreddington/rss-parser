@@ -123,7 +123,7 @@ async function create_pull_request(octokit, itemObject, config) {
       sha: github.context.sha,
       base: "main",
       title: itemObject.title,
-      message: `👀 This pull request requires your attention.
+      body: `👀 This pull request requires your attention.
       
       Review the [${config.feed_url}](${config.feed_url}) feed's new item: [${itemObject.title}](${itemObject.url}). 
       
