@@ -311,16 +311,15 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     core.debug("[check_last_parsed] last_parsed_date: " + config_last_parsed_date);
     core.debug("[check_last_parsed] is_first_run: " + is_new_config_last_parsed_record);
 
-    // RSS Feeds are not required to be in chronological order,
-    // so sort the items by date and get the date of the last item
+    // RSS Feeds do not have to be in chronological order, so sort the items by date
+    // with the most recent first
+
     [...items].sort((a, b) => {
-      return new Date(b.querySelector("pubDate").textContent) -
-        new Date(a.querySelector("pubDate").textContent);
+      return new Date(b.pubDate) - new Date(a.pubDate);
     });
 
-    const last_item_date = new Date(
-      [...items][items.length - 1].querySelector("pubDate").textContent
-    );
+    // Get the date of the most recently published item
+    let last_item_date = new Date(items[0].pubDate);  
 
     // Output the last item date for debugging
     core.debug("[check_last_parsed] last_item_date: " + last_item_date);
