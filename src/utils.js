@@ -21,8 +21,8 @@ export async function check_url(feed_url) {
     if (url.protocol !== "http:" && url.protocol !== "https:") {
       core.setFailed(`URL does not begin with http or https: ${input}`);
     }
-  } catch (_) {
-    core.setFailed(`${feed_url} is not a valid URL`);
+  } catch (error) {
+    core.setFailed(`${feed_url} is not a valid URL, ${error}`);
   }
 }
 
