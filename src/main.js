@@ -4,7 +4,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 
 // Pull in utils to enable the fetching of RSS feeds and parsing of XML.
-import {check_last_parsed, check_url, fetch_feed, parse_feed,  update_last_parsed, validate_config} from './utils.js';
+import utils from './utils.js';
 
 // The main function to run when the action is called
 export async function run() {
@@ -21,7 +21,7 @@ export async function run() {
   };
 
   // Validate the config
-  config = await validate_config(config);
+  config = await utils.validate_config(config);
 
   // Output the config to the debug log
   core.debug(`config: ${JSON.stringify(config)}`);
@@ -31,23 +31,23 @@ export async function run() {
   const octokit = github.getOctokit(github_token);
 
   // Check that the provided URL is valid
-  await check_url(feed_url);
+  await utils.check_url(feed_url);
 
   // Fetch the RSS feed from the provided URL
-  let items = await fetch_feed(feed_url);
+  let items = await utils.fetch_feed(feed_url);
   
   // Output the items to the debug log
   core.debug(`items: ${JSON.stringify([...items])}`);
 
   // Check if a parse is needed
-  let last_parsed_result = await check_last_parsed(feed_url, octokit, items, config);
+  let last_parsed_result = await utils.check_last_parsed(feed_url, octokit, items, config);
   core.debug(`last_parsed_result: ${JSON.stringify(last_parsed_result)}`);
 
   // If a parse is needed, parse the feed and take appropriate action
   if (last_parsed_result !== 'no_need_to_process') {
     // Parse the RSS feed and take appropriate action
-    await parse_feed(octokit, items, config);
+    await utils.parse_feed(octokit, items, config);
     // Update the last parsed file
-    await update_last_parsed(feed_url, octokit, config);
+    await utils.update_last_parsed(feed_url, octokit, config);
   }
 }

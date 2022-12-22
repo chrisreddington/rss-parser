@@ -8,25 +8,25 @@ import got from 'got';
 import { JSDOM } from 'jsdom';
 
 // itemCount is used for test purposes
-export let itemCount = 0;
+let itemCount = 0;
 let current_parse_date;
 
 // Function to check that the provided URL is 
 // valid (and begins with http or https)
-export async function check_url(feed_url) {
+async function check_url(feed_url) {
   try {
-    let url = new URL(feed_url);
+    url = new URL(feed_url);
 
     // Check that the URL begins with http or https
     if (url.protocol !== "http:" && url.protocol !== "https:") {
       core.setFailed(`URL does not begin with http or https: ${input}`);
     }
-  } catch (error) {
-    core.setFailed(`${feed_url} is not a valid URL, ${error}`);
+  } catch (_) {
+    core.setFailed(`${feed_url} is not a valid URL`);
   }
 }
 
-export async function create_branch(octokit, branch_name, config) {
+async function create_branch(octokit, branch_name, config) {
   try {
     const branch = await octokit.rest.git.getRef({
       owner: github.context.repo.owner,
@@ -52,7 +52,7 @@ export async function create_branch(octokit, branch_name, config) {
   }
 }
 
-export async function create_issue(octokit, itemObject) {
+async function create_issue(octokit, itemObject) {
   try {
     octokit.rest.issues.create({
       owner: github.context.repo.owner,
@@ -67,7 +67,7 @@ export async function create_issue(octokit, itemObject) {
   }
 }
 
-export async function create_or_update_file(octokit, itemObject, config, branch) {
+async function create_or_update_file(octokit, itemObject, config, branch) {
   try {
     // Check if the file already exists
     const file = await octokit.rest.repos.getContent({
@@ -97,7 +97,7 @@ export async function create_or_update_file(octokit, itemObject, config, branch)
   }
 }
 
-export async function create_pull_request(octokit, itemObject, config) {
+async function create_pull_request(octokit, itemObject, config) {
   try {
     const pullRequest = await octokit.rest.pulls.list({
       owner: github.context.repo.owner,
@@ -138,7 +138,7 @@ export async function create_pull_request(octokit, itemObject, config) {
 
 // Function to fetch the RSS feed from the provided
 // URL and parse the XML into a DOM object
-export async function fetch_feed(feed_url) {
+async function fetch_feed(feed_url) {
   try {
     const response = await got(feed_url);
     current_parse_date = new Date();
@@ -151,7 +151,7 @@ export async function fetch_feed(feed_url) {
 }
 
 // Function to parse the RSS feed and take appropriate action
-export async function parse_feed(octokit, items, config) {
+async function parse_feed(octokit, items, config) {
   // Initialise an empty array to hold the output
   let output = [];
 
@@ -213,7 +213,7 @@ export async function parse_feed(octokit, items, config) {
   }
 }
 
-export async function check_last_parsed(feed_url, octokit, items, config) {
+async function check_last_parsed(feed_url, octokit, items, config) {
   // Instantiate variables
   let config_last_parsed_records_file;
   let config_last_parsed_records_content;
@@ -357,7 +357,7 @@ export async function check_last_parsed(feed_url, octokit, items, config) {
   }
 }
 
-export async function update_last_parsed(feed_url, octokit, config) {
+async function update_last_parsed(feed_url, octokit, config) {
   let config_branch = `${config.branch_prefix}-config`;
   try {
     // Get the last parsed file
@@ -408,7 +408,7 @@ export async function update_last_parsed(feed_url, octokit, config) {
   }
 }
 
-export async function validate_config (config){
+async function validate_config (config){
   // If the extension does not start with a dot, add one
   if (config.extension[0] !== ".") {
     config.extension = `.${config.extension}`;
@@ -439,3 +439,13 @@ export async function validate_config (config){
 
   return config
 }
+
+export default {
+  check_last_parsed,
+  check_url,
+  fetch_feed,
+  parse_feed,
+  update_last_parsed,
+  validate_config,
+  itemCount
+};
