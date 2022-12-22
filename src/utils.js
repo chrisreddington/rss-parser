@@ -314,8 +314,8 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     // RSS Feeds are not required to be in chronological order,
     // so sort the items by date and get the date of the last item
     [...items].sort((a, b) => {
-      return new Date(a.querySelector("pubDate").textContent) -
-        new Date(b.querySelector("pubDate").textContent);
+      return new Date(b.querySelector("pubDate").textContent) -
+        new Date(a.querySelector("pubDate").textContent);
     });
 
     const last_item_date = new Date(
