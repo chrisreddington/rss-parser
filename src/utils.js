@@ -10,6 +10,7 @@ import { JSDOM } from 'jsdom';
 // itemCount is used for test purposes
 let itemCount = 0;
 let current_parse_date;
+let config_last_parsed_date;
 
 // Function to check that the provided URL is 
 // valid (and begins with http or https)
@@ -186,7 +187,7 @@ async function parse_feed(octokit, items, config) {
     switch (config.script_output) {
       case "issue":
         // Check if the item has a date and if it's newer than the last parsed date
-        if (itemObject.date && new Date(itemObject.date) > last_parsed_date) {
+        if (itemObject.date && new Date(itemObject.date) > config_last_parsed_date) {
           const issue = await create_issue(octokit, itemObject);
           break;
         }
@@ -296,8 +297,6 @@ async function check_last_parsed(feed_url, octokit, items, config) {
     let config_last_parsed_records_array = JSON.parse(
       Buffer.from(config_last_parsed_records_content, "base64").toString()
     );
-    // Initialise last_parsed_date
-    let config_last_parsed_date;
 
     // Check if the array contains an item with all of the same properties except the date
     const current_config_exist_check = config_last_parsed_records_array.find(
