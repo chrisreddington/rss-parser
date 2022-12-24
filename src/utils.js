@@ -462,6 +462,10 @@ async function validate_config (config){
 export default {
   check_last_parsed,
   check_url,
+  create_branch,
+  create_issue,
+  create_or_update_file,
+  create_pull_request,
   fetch_feed,
   parse_feed,
   update_last_parsed,
