@@ -154,6 +154,7 @@ async function fetch_feed(feed_url) {
     return items;
   } catch (error) {
     core.setFailed(`An error occurred while fetching the RSS feed: ${error}`);
+    return null
   }
 }
 
