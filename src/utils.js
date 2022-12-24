@@ -59,7 +59,7 @@ async function create_branch(octokit, branch_name, config) {
 
 async function create_issue(octokit, itemObject) {
   try {
-    octokit.rest.issues.create({
+    let issue = await octokit.rest.issues.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       title: itemObject.title,
@@ -67,8 +67,10 @@ async function create_issue(octokit, itemObject) {
       
       [Read more](${itemObject.url})`,
     });
+    return issue;
   } catch (error) {
     core.setFailed(`GitHub issue was not created: ${error}`);
+    return {};
   }
 }
 

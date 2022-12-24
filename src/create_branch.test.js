@@ -53,6 +53,9 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
 test("create_branch should return branch object when it already exists", async () => {
+
+  
+
   expect(
     await utils.create_branch(github.getOctokit(github_token), "featureA", {})
   ).toStrictEqual({
