@@ -106,40 +106,35 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
 
 async function create_pull_request(octokit, itemObject, config) {
   try {
-    const pullRequest = await octokit.rest.pulls.list({
+    return await octokit.rest.pulls.list({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       head: `${github.context.repo.owner}:${itemObject.slug}`,
       base: "main",
     });
-
-    // If the pull request exists, return it
-    if (pullRequest.data.length > 0) {
-      core.info(
-        `Pull request for ${itemObject.slug} already exists, using existing reference.`
-      );
-      return pullRequest;
-    }
-
-    // If the pull request doesn't exist, create it
-    return octokit.rest.pulls.create({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      head: itemObject.slug,
-      sha: github.context.sha,
-      base: "main",
-      title: itemObject.title,
-      body: `👀 This pull request requires your attention.
-      
-      Review the [${config.feed_url}](${config.feed_url}) feed's new item: [${itemObject.title}](${itemObject.url}). 
-      
-      Decide whether you want to add this item to your repository or not. 
-      
-      - ✅ If you decide to add it, please merge this pull request.
-      - ❌ If you decide not to add it, please close this pull request.`,
-    });
   } catch (error) {
-    core.setFailed(`GitHub pull request was not created: ${error}`);
+    try {
+      // If the pull request doesn't exist, create it
+      return await octokit.rest.pulls.create({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        head: itemObject.slug,
+        sha: github.context.sha,
+        base: "main",
+        title: itemObject.title,
+        body: `👀 This pull request requires your attention.
+        
+        Review the [${config.feed_url}](${config.feed_url}) feed's new item: [${itemObject.title}](${itemObject.url}). 
+        
+        Decide whether you want to add this item to your repository or not. 
+        
+        - ✅ If you decide to add it, please merge this pull request.
+        - ❌ If you decide not to add it, please close this pull request.`,
+      });
+    } catch(error) {
+      core.setFailed(`GitHub pull request was not created: ${error}`);
+      return null;
+    }
   }
 }
 
