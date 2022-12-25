@@ -123,13 +123,13 @@ async function create_pull_request(octokit, itemObject, config) {
         base: "main",
         title: itemObject.title,
         body: `👀 This pull request requires your attention.
-        
-        Review the [${config.feed_url}](${config.feed_url}) feed's new item: [${itemObject.title}](${itemObject.url}). 
-        
-        Decide whether you want to add this item to your repository or not. 
-        
-        - ✅ If you decide to add it, please merge this pull request.
-        - ❌ If you decide not to add it, please close this pull request.`,
+  
+  Review the [${config.feed_url}](${config.feed_url}) feed's new item: [${itemObject.title}](${itemObject.url}). 
+  
+  Decide whether you want to add this item to your repository or not. 
+  
+  - ✅ If you decide to add it, please merge this pull request.
+  - ❌ If you decide not to add it, please close this pull request.`,
       });
     } catch(error) {
       core.setFailed(`GitHub pull request was not created: ${error}`);
