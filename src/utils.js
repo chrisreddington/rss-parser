@@ -146,6 +146,19 @@ async function fetch_feed(feed_url) {
     current_parse_date = new Date();
     const feedOutput = new JSDOM(response.body, { contentType: "text/xml" });
     const items = feedOutput.window.document.querySelectorAll("item");
+
+    // Check if the feed is valid
+    if (items === null) {
+      core.setFailed(`The RSS feed is not valid: ${feed_url}`);
+      return null;
+    }
+    
+    // Check if there are any items in the feed
+    if (items.length === 0) {
+      core.info(`No items found in the RSS feed: ${feed_url}`);
+      return null;
+    }
+
     return items;
   } catch (error) {
     core.setFailed(`An error occurred while fetching the RSS feed: ${error}`);
@@ -185,6 +198,8 @@ async function parse_feed(octokit, items, config) {
       slug: slug,
     };
 
+    output = [...output, itemObject];
+    
     // Take appropriate action based on the script_output config
     switch (config.script_output) {
       case "issue":
@@ -196,9 +211,6 @@ async function parse_feed(octokit, items, config) {
         core.info(
           `Item ${itemObject.title} is older than the last parsed date, so has already been parsed. Skipping.`
         );
-        break;
-      case "json":
-        output = [...output, itemObject];
         break;
       case "pull_request":
         // Check if the item has a date and if it's newer than the last parsed date
@@ -226,9 +238,11 @@ async function parse_feed(octokit, items, config) {
 
   // If the script_output is json, output the array of objects
   if (config.script_output === "json") {
-    console.log(output);
     core.setOutput("items", output);
   }
+
+  // Return output as an object
+  return output;  
 }
 
 async function check_last_parsed(feed_url, octokit, items, config) {
