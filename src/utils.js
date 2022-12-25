@@ -53,6 +53,7 @@ async function create_branch(octokit, branch_name, config) {
       });
     } catch (error) {
       core.setFailed(`GitHub branch was not created: ${error}`);
+      return null;
     }
   }
 }

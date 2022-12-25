@@ -101,3 +101,23 @@ test("create_branch should create a new branch object and return that if it does
     url: "https://api.github.com/repos/chrisreddington/rss-parser/git/refs",
   });
 });
+
+test("create_branch should return null when the initial get is unsuccessful, followed by an unsuccessful post", async () => {
+  server.use(
+    rest.get(
+      "https://api.github.com/repos/chrisreddington/rss-parser/git/ref/heads%2FfeatureA",
+      (req, res, ctx) => res(ctx.status(404))
+    ),
+    rest.post(
+      "https://api.github.com/repos/chrisreddington/rss-parser/git/refs",
+      (req, res, ctx) => {
+        return res(
+          ctx.status(422)
+        )
+      })
+  );
+
+  expect(
+    await utils.create_branch(github.getOctokit(github_token), "featureA", {})
+  ).toBeNull();
+});
