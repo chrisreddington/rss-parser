@@ -78,18 +78,16 @@ async function create_issue(octokit, itemObject) {
 async function create_or_update_file(octokit, itemObject, config, branch) {
   try {
     // Check if the file already exists
-    const file = await octokit.rest.repos.getContent({
+    return await octokit.rest.repos.getContent({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       ref: `refs/heads/${itemObject.slug}`,
       path: `${config.subfolder}${itemObject.slug}${config.extension}`
     });
-
-    core.info(`File ${itemObject.slug} already exists, doing nothing.`);
   } catch (error) {
     // If the file doesn't exist, create it
     try {
-      return octokit.rest.repos.createOrUpdateFileContents({
+      return await octokit.rest.repos.createOrUpdateFileContents({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         branch: itemObject.slug,
@@ -101,6 +99,7 @@ async function create_or_update_file(octokit, itemObject, config, branch) {
       });
     } catch (error) {
       core.setFailed(`GitHub file was not created: ${error}`);
+      return null;
     }
   }
 }
