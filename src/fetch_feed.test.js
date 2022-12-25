@@ -655,3 +655,87 @@ test("fetch_feed should return null on an unsuccesful response", async () => {
     await utils.fetch_feed("https://github.blog/feed/")
   ).toBe(null)
 });
+
+test("fetch_feed should return null when no items are returned", async () => {
+  // Arrange
+  server.use(
+    rest.get(
+      "https://github.blog/feed",
+      (req, res, ctx) => {
+        return res(
+          ctx.status(200),
+          ctx.xml(
+            `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+            xmlns:content="http://purl.org/rss/1.0/modules/content/"
+            xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+            xmlns:dc="http://purl.org/dc/elements/1.1/"
+            xmlns:atom="http://www.w3.org/2005/Atom"
+            xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+            xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+            
+            xmlns:georss="http://www.georss.org/georss"
+            xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+            >
+          
+          <channel>
+            <title>The GitHub Blog</title>
+            <atom:link href="https://github.blog/feed/" rel="self" type="application/rss+xml" />
+            <link>https://github.blog/</link>
+            <description>Updates, ideas, and inspiration from GitHub to help developers build and design software.</description>
+            <lastBuildDate>Wed, 21 Dec 2022 16:06:49 +0000</lastBuildDate>
+            <language>en-US</language>
+            <sy:updatePeriod>
+            hourly	</sy:updatePeriod>
+            <sy:updateFrequency>
+            1	</sy:updateFrequency>
+            <generator>https://wordpress.org/?v=6.1.1</generator>
+          
+          <image>
+            <url>https://github.blog/wp-content/uploads/2019/01/cropped-github-favicon-512.png?fit=32%2C32</url>
+            <title>The GitHub Blog</title>
+            <link>https://github.blog/</link>
+            <width>32</width>
+            <height>32</height>
+          </image> 
+          <site xmlns="com-wordpress:feed-additions:1">153214340</site>	
+            </channel>
+          </rss>`
+          )
+        )
+      })
+  );
+
+  // Act & Assert
+  expect(
+    await utils.fetch_feed("https://github.blog/feed/")
+  ).toBe(null)
+});
+
+test("fetch_feed should return null when an invalid feed is parsed", async () => {
+  // Arrange
+  server.use(
+    rest.get(
+      "https://github.blog/feed",
+      (req, res, ctx) => {
+        return res(
+          ctx.status(200),
+          ctx.xml(`
+          <html>
+            <head>
+              <title>GitHub Blog</title>
+            </head>
+            <body>
+              <h1>GitHub Blog</h1>
+            </body>
+          </html>
+          `
+          )
+        )
+      })
+  );
+
+  // Act & Assert
+  expect(
+    await utils.fetch_feed("https://github.blog/feed/")
+  ).toBe(null)
+});
